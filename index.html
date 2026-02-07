@@ -142,7 +142,6 @@
         }
         .oracle-core:hover .symbol { opacity: 1; transform: scale(1.1); }
 
-        /* === 答案顯示：炸裂登場效果 === */
         .answer-text {
             position: absolute; z-index: 1; top: 50%; left: 50%;
             width: max-content; padding: 0 20px; 
@@ -245,6 +244,25 @@
     </div>
 
     <script>
+        // ============================================
+        // === 自定義圖片區 (在此替換你的圖片連結) ===
+        // ============================================
+        const yourImages = [
+            // 這裡放圖片的 URL，可以用 Imgur 或 GitHub 的連結
+            // 範例圖片：月亮、雲朵 (去背 PNG 效果最好)
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/600px-FullMoon2010.jpg', 
+            'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Saturn_-_April_2016.jpg/600px-Saturn_-_April_2016.jpg',
+            // 你可以加入更多...
+        ];
+
+        // 預先載入圖片
+        const loadedImages = [];
+        yourImages.forEach(url => {
+            const img = new Image();
+            img.src = url;
+            loadedImages.push(img);
+        });
+
         const answers = [
             "毫無疑問", "時機已到", "放手一搏", "大膽前行", 
             "值得冒險", "你是對的", "全力以赴", "就在眼前",
@@ -283,7 +301,7 @@
         const CHARGE_SPEED = 1.0; 
 
         // ==========================================
-        // === VFX Engine (強化版流星) ===
+        // === VFX Engine (含浮動圖片) ===
         // ==========================================
         const canvas = document.getElementById('vfx-canvas');
         const ctx = canvas.getContext('2d');
@@ -322,25 +340,37 @@
                     this.decay = Math.random() * 0.02 + 0.01;
                     this.active = true; this.hue = Math.random()*60 + 240;
                 } 
-                // === 繁星 ===
                 else if (this.type === 'star') {
                     this.x = Math.random() * w; this.y = Math.random() * h;
                     this.size = Math.random() * 1.8 + 0.5; 
                     this.life = Math.random() * Math.PI * 2; 
                     this.twinkleSpeed = Math.random() * 0.05 + 0.02; 
                 }
-                // === 流星：更頻繁、更大、更明顯 ===
                 else if (this.type === 'meteor') {
                     if (Math.random() > 0.5) { this.x = Math.random() * w; this.y = -150; } 
                     else { this.x = -150; this.y = Math.random() * h * 0.5; }
-                    // 速度更快
                     this.vx = Math.random() * 25 + 30; 
                     this.vy = Math.random() * 15 + 15;
-                    // 尺寸更大
                     this.size = Math.random() * 4 + 3; 
                     this.active = false; 
-                    // 尾跡更長
                     this.trailLength = Math.random() * 150 + 100; 
+                }
+                // === 新增：漂浮圖片 (Floater) ===
+                else if (this.type === 'floater') {
+                    // 隨機從左側或右側進入
+                    const fromLeft = Math.random() > 0.5;
+                    this.x = fromLeft ? -100 : w + 100;
+                    this.y = Math.random() * h * 0.8; // 避免太靠下
+                    this.vx = (fromLeft ? 1 : -1) * (Math.random() * 0.3 + 0.2); // 移動非常慢
+                    this.vy = (Math.random() - 0.5) * 0.2;
+                    this.size = Math.random() * 60 + 40; // 圖片大小
+                    this.active = false;
+                    this.rotation = Math.random() * Math.PI * 2;
+                    this.rotSpeed = (Math.random() - 0.5) * 0.005; // 緩慢旋轉
+                    // 隨機選一張圖
+                    this.img = loadedImages.length > 0 ? loadedImages[Math.floor(Math.random() * loadedImages.length)] : null;
+                    this.alpha = 0; // 淡入淡出用
+                    this.fadeIn = true;
                 }
             }
             update() {
@@ -362,24 +392,59 @@
                     this.life -= this.decay; this.alpha = this.life;
                     if (this.life<=0) this.active = false;
                 } 
-                // === 更新繁星閃爍 ===
                 else if (this.type === 'star') {
                     this.life += this.twinkleSpeed;
                     this.alpha = 0.65 + Math.sin(this.life) * 0.35; 
                 }
-                // === 更新流星 ===
                 else if (this.type === 'meteor' && this.active) {
                     this.x += this.vx; this.y += this.vy;
                     if (this.x > w + 300 || this.y > h + 300) { this.reset(); this.active = false; }
                 }
+                // === 更新：漂浮圖片 ===
+                else if (this.type === 'floater' && this.active) {
+                    this.x += this.vx; 
+                    this.y += this.vy;
+                    this.rotation += this.rotSpeed;
+                    
+                    // 淡入淡出邏輯
+                    if (this.fadeIn) {
+                        this.alpha += 0.005;
+                        if (this.alpha >= 0.6) this.fadeIn = false; // 最大透明度 0.6
+                    } else {
+                        // 檢查是否快離開畫面
+                        if (this.x < -150 || this.x > w + 150) {
+                             this.alpha -= 0.005;
+                             if(this.alpha <= 0) {
+                                 this.reset();
+                                 this.active = false;
+                             }
+                        }
+                    }
+                }
             }
             draw() {
-                if ((this.type==='charge'||this.type==='burst'||this.type==='meteor') && !this.active) return;
+                if ((this.type==='charge'||this.type==='burst'||this.type==='meteor'||this.type==='floater') && !this.active) return;
                 
+                // === 繪製：漂浮圖片 ===
+                if (this.type === 'floater') {
+                    if (!this.img || !this.img.complete) return;
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha;
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    // 繪製圓形裁切效果 (選用) 或直接繪製
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size/2, 0, Math.PI*2);
+                    ctx.closePath();
+                    ctx.clip(); // 裁切成圓形，讓方形圖片也好看
+                    ctx.drawImage(this.img, -this.size/2, -this.size/2, this.size, this.size);
+                    ctx.restore();
+                    return; // 圖片繪製完畢，退出
+                }
+
                 ctx.beginPath();
 
                 if (this.type === 'meteor') {
-                    // 流星尾跡
                     const gradient = ctx.createLinearGradient(this.x, this.y, this.x - this.vx*this.trailLength/this.speed, this.y - this.vy*this.trailLength/this.speed);
                     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
                     gradient.addColorStop(0.3, 'rgba(224, 195, 252, 0.9)');
@@ -388,7 +453,6 @@
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - this.vx*this.trailLength/this.speed, this.y - this.vy*this.trailLength/this.speed);
                     ctx.stroke();
-                    // 流星頭部更大更亮
                     ctx.beginPath(); ctx.arc(this.x, this.y, this.size*2, 0, Math.PI*2);
                     ctx.fillStyle = "rgba(255,255,255,1)"; 
                     ctx.shadowBlur = 20; ctx.shadowColor = "white";
@@ -413,16 +477,23 @@
             ...Array.from({length: 100}, ()=>new Particle('charge')),
             ...Array.from({length: 150}, ()=>new Particle('burst')),
             ...Array.from({length: 200}, ()=>new Particle('star')), 
-            ...Array.from({length: 8}, ()=>new Particle('meteor')) // 增加流星池數量
+            ...Array.from({length: 8}, ()=>new Particle('meteor')),
+            ...Array.from({length: 3}, ()=>new Particle('floater')) // 新增 3 個漂浮物池
         ];
 
         function animateVFX() {
             ctx.clearRect(0,0,w,h); 
             
-            // 極大提高流星出現機率 (非常頻繁)
+            // 觸發流星
             if (Math.random() > 0.92) {
                 const meteor = particles.find(p => p.type === 'meteor' && !p.active);
                 if (meteor) meteor.active = true;
+            }
+
+            // 觸發漂浮圖片 (機率極低，偶爾出現)
+            if (Math.random() > 0.998) {
+                const floater = particles.find(p => p.type === 'floater' && !p.active);
+                if (floater) floater.active = true;
             }
 
             ctx.globalCompositeOperation = 'screen';
@@ -439,11 +510,10 @@
         animateVFX();
 
         // ==========================================
-        // === Audio Engine (移除噪音，純淨版) ===
+        // === Audio Engine (純淨版) ===
         // ==========================================
         const Audio = {
             ctx: null, masterGain: null, isMuted: false, chargeOsc: null, 
-            // 移除 noiseBuffer
             init() {
                 if(this.ctx) return; 
                 const AC = window.AudioContext || window.webkitAudioContext;
@@ -451,7 +521,6 @@
                 this.masterGain = this.ctx.createGain();
                 this.masterGain.gain.value = 0.3;
                 this.masterGain.connect(this.ctx.destination);
-                // 移除 generateNoise()
                 this.startDrone();
             },
             resume() { if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
@@ -460,7 +529,6 @@
                 if(this.masterGain) this.masterGain.gain.setTargetAtTime(this.isMuted?0:0.3, this.ctx.currentTime, 0.1);
                 return this.isMuted;
             },
-            // 移除 generateNoise 方法
             startDrone() {
                 const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
                 osc.type = 'sine'; osc.frequency.value = 110; gain.gain.value = 0.05;
@@ -487,14 +555,9 @@
                     this.chargeOsc.stop(this.ctx.currentTime+0.1); this.chargeOsc = null;
                 }
             },
-            // === 純淨版揭曉音效 (移除噪音層) ===
             playReveal() {
                 if(this.isMuted) return;
                 const now = this.ctx.currentTime;
-
-                // 移除 Noise Burst 相關代碼
-
-                // 2. 播放旋律層 (保持不變)
                 const palettes = [
                     { type: 'sine', notes: [523, 659, 784, 1046], speed: 0.05 }, 
                     { type: 'triangle', notes: [220, 261, 329, 440, 523], speed: 0.1 }, 
