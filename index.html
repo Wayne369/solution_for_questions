@@ -27,11 +27,10 @@
             font-family: 'Philosopher', 'Zen Maru Gothic', sans-serif;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
             user-select: none;
             touch-action: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            /* 背景流動動畫 */
             background: linear-gradient(-45deg, var(--bg-deep), var(--bg-mid), var(--bg-light), #1a1a2e);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
@@ -68,12 +67,15 @@
         .ctrl-btn:hover { background: rgba(255, 255, 255, 0.2); color: #fff; transform: scale(1.1); }
         .ctrl-btn.active { color: #fbc2eb; border-color: #fbc2eb; box-shadow: 0 0 15px rgba(251, 194, 235, 0.3); }
 
-        /* === 抬頭顯示說明 (HUD) === */
+        /* === HUD (絕對定位，不推擠內容) === */
         .hud {
-            position: relative; z-index: 20;
+            position: absolute; /* 關鍵修改：脫離文件流 */
+            top: 15%; /* 固定在螢幕上方 15% 處 */
+            left: 0; width: 100%;
+            z-index: 20;
             text-align: center;
-            margin-top: 15vh; /* 調整高度以免太貼頂 */
             transition: opacity 0.5s, transform 0.5s;
+            pointer-events: none; /* 讓點擊穿透，避免擋住下層 */
         }
         .hud h1 {
             font-family: 'Philosopher', sans-serif;
@@ -91,24 +93,20 @@
         }
         .step span { color: #e0c3fc; font-weight: bold; margin-right: 5px; }
         
-        /* 隱藏時往上飄一點 */
-        .hud.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+        .hud.hidden { opacity: 0; transform: translateY(-20px); }
 
-        /* === 核心互動區 === */
+        /* === 核心互動區 (絕對置中) === */
         .container {
-            position: relative; z-index: 10;
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; /* 垂直置中 */
-            width: 100%;
+            position: absolute; /* 關鍵修改：絕對定位 */
+            top: 50%; left: 50%; /* 幾何中心點 */
+            transform: translate(-50%, -50%); /* 修正位移 */
+            z-index: 10;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* 核心包裝器：這是定位的基準點 */
         .core-wrapper {
             position: relative; 
-            width: 300px; height: 300px; /* 稍微加大 */
+            width: 300px; height: 300px;
             display: flex; justify-content: center; align-items: center;
         }
 
@@ -120,7 +118,7 @@
             box-shadow: 0 0 40px rgba(161, 140, 209, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(4px);
-            z-index: 5; /* 確保在答案上層 */
+            z-index: 5;
         }
 
         .oracle-core.locked { cursor: default; opacity: 0 !important; pointer-events: none; }
@@ -158,15 +156,15 @@
         /* 答案顯示 - 絕對置中 */
         .answer-text {
             position: absolute; 
-            z-index: 1; /* 在核心下層，核心消失後顯示 */
+            z-index: 1; 
             top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.8); /* 初始狀態：置中且微縮 */
+            transform: translate(-50%, -50%) scale(0.8);
             
             font-family: 'Zen Maru Gothic', sans-serif;
             font-size: 3.5rem; font-weight: 700;
             text-align: center; 
             width: 100%;
-            white-space: nowrap; /* 防止太早換行 */
+            white-space: nowrap;
             
             pointer-events: none; opacity: 0;
             filter: blur(20px);
@@ -179,23 +177,27 @@
         
         .answer-text.show { 
             opacity: 1; 
-            transform: translate(-50%, -50%) scale(1); /* 最終狀態：置中且正常大小 */
+            transform: translate(-50%, -50%) scale(1);
             filter: blur(0); 
         }
 
-        /* === 重置按鈕 (底部) === */
+        /* === 重置按鈕 (絕對定位底部) === */
         .reset-hint {
-            position: absolute; bottom: 15%; z-index: 20;
+            position: absolute; bottom: 12%; left: 50%;
+            transform: translateX(-50%) translateY(20px); /* 初始水平置中 + 向下隱藏 */
+            z-index: 20;
             font-family: 'Zen Maru Gothic', sans-serif;
             font-size: 1.1rem; color: var(--text-secondary);
-            opacity: 0; transform: translateY(20px);
+            opacity: 0; 
             transition: all 0.5s; cursor: pointer;
             padding: 12px 35px; border-radius: 30px;
             border: 1px solid transparent;
             letter-spacing: 2px;
-            background: rgba(0,0,0,0.2); /* 微底色增加辨識度 */
+            background: rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
-        .reset-hint.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        /* 顯示時，保持水平置中，Y軸歸零 */
+        .reset-hint.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
         .reset-hint:hover {
             border-color: rgba(255,255,255,0.5);
             background: rgba(255,255,255,0.1);
@@ -225,7 +227,6 @@
     <div class="container">
         <div class="core-wrapper">
             <div class="answer-text" id="answer"></div>
-
             <div class="oracle-core" id="core">
                 <svg class="progress-svg" viewBox="0 0 260 260">
                     <defs>
@@ -249,13 +250,34 @@
     </div>
 
     <script>
+        // === 擴充版解答庫 (60句) ===
         const answers = [
-            "時機已到", "相信直覺", "保持靜默", "大膽前行", "放下執念", 
-            "結果驚人", "等待信號", "回歸初心", "尋求盟友", "野獸前輩", 
-            "稍安勿躁", "謹慎行事", "光在前方", "混沌未明", "值得冒險", 
-            "重新思考", "你是對的", "命運已定", "無需多言", "放手一搏",
-            "以退為進", "龍胤之力", "回頭是岸", "觀察徵兆", "順其自然",
-            "毫無疑問", "別太苛求", "先睡一覺", "讓它過去", "皆是安排"
+            // 肯定與行動
+            "毫無疑問", "時機已到", "放手一搏", "大膽前行", 
+            "值得冒險", "你是對的", "全力以赴", "就在眼前",
+            "結果驚人", "勢在必行", "光在前方", "無需猶豫",
+            
+            // 等待與審慎
+            "稍安勿躁", "時機未到", "謹慎行事", "重新思考",
+            "並非現在", "保持靜默", "風險太高", "等待信號",
+            "多加觀察", "切勿衝動", "回頭是岸", "混沌未明",
+            
+            // 內在指引
+            "相信直覺", "聽從內心", "回歸初心", "放下執念",
+            "原諒自己", "答案在你心中", "誠實面對", "愛你自己",
+            "專注當下", "別回頭看", "信念", "擁抱未知",
+            
+            // 尋求外力
+            "尋求盟友", "尋求建議", "觀察徵兆", "等待幫助",
+            "與人分享", "並非獨行", "接受援助", "留意巧合",
+            
+            // 療癒與哲學
+            "順其自然", "這也是過程", "你需要休息", "先睡一覺",
+            "深呼吸", "別太苛求", "讓它過去", "隨風而去",
+            "命運已定", "無需多言", "一切安好", "皆是安排",
+
+            //抽象
+            "野獸前輩", "龍胤之力", "猶豫，就會敗北", "會員制餐廳", "我打宿儺"
         ];
 
         const core = document.getElementById('core');
@@ -272,9 +294,7 @@
         let animFrame;
         const totalLength = 754; 
         
-        // === 速度設定 ===
-        // 1.0 = 適中 (約 1.5秒充滿)
-        // 之前是 2.2 (太快)，V7 是 0.8 (太慢)
+        // 蓄力速度 (適中)
         const CHARGE_SPEED = 1.0; 
 
         // ==========================================
@@ -306,7 +326,7 @@
                     const dist = 180 + Math.random() * 150;
                     this.x = cx + Math.cos(angle) * dist; this.y = cy + Math.sin(angle) * dist;
                     this.size = Math.random() * 2 + 1;
-                    this.speed = 4 + Math.random() * 3; // 速度適中
+                    this.speed = 4 + Math.random() * 3; 
                     this.active = true; this.hue = 280;
                 } else if (this.type === 'burst') {
                     this.x = cx; this.y = cy;
@@ -403,7 +423,6 @@
                 this.chargeGain = this.ctx.createGain();
                 this.chargeOsc.type = 'triangle'; this.chargeOsc.frequency.value = 220;
                 
-                // 配合速度調整音效淡入時間
                 this.chargeGain.gain.setValueAtTime(0, this.ctx.currentTime);
                 this.chargeGain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 1.0); 
                 
@@ -428,7 +447,7 @@
                 scale.forEach((f,i) => { 
                     const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
                     osc.type = Math.random()>0.5?'sine':'triangle'; osc.frequency.value = f;
-                    const t = this.ctx.currentTime + (i*0.08); // 稍微放慢琶音速度
+                    const t = this.ctx.currentTime + (i*0.08); 
                     gain.gain.setValueAtTime(0, t);
                     gain.gain.linearRampToValueAtTime(0.1, t+0.05);
                     gain.gain.exponentialRampToValueAtTime(0.001, t+3.0);
