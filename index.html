@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Celestial Oracle</title>
+    <title>虛空神諭 | Celestial Oracle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Noto+Serif+TC:wght@200;500;700&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
     <style>
         :root {
             --bg-color: #020205;
-            --primary-gold: #ffd700; /* 更純粹的金色 */
+            --primary-gold: #ffd700;
             --accent-glow: rgba(255, 215, 0, 0.6);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.6);
@@ -37,7 +37,6 @@
             align-items: center;
         }
 
-        /* Canvas 粒子層 (最底層) */
         #vfx-canvas {
             position: absolute;
             top: 0; left: 0;
@@ -46,7 +45,6 @@
             pointer-events: none;
         }
 
-        /* 背景氛圍暈影 */
         body::after {
             content: "";
             position: absolute;
@@ -91,6 +89,18 @@
             background: rgba(255, 215, 0, 0.05);
         }
 
+        /* 重置按鈕在答案揭曉時會有提示動畫 */
+        .ctrl-btn.highlight {
+            color: var(--primary-gold);
+            animation: pulse-gold 2s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0% { text-shadow: 0 0 5px var(--accent-glow); }
+            50% { text-shadow: 0 0 20px var(--primary-gold); }
+            100% { text-shadow: 0 0 5px var(--accent-glow); }
+        }
+
         /* === 核心互動區 === */
         .container {
             position: relative;
@@ -101,7 +111,6 @@
             justify-content: center;
         }
 
-        /* 包裹核心和答案的容器，用於定位 */
         .core-wrapper {
             position: relative;
             width: 220px;
@@ -111,7 +120,6 @@
             align-items: center;
         }
 
-        /* 法陣核心 */
         .oracle-core {
             width: 100%; height: 100%;
             border-radius: 50%;
@@ -121,21 +129,24 @@
             align-items: center;
             cursor: pointer;
             transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-            /* 核心發光 */
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.1), inset 0 0 20px rgba(255, 215, 0, 0.05);
             border: 1px solid rgba(255, 215, 0, 0.15);
             background: rgba(0,0,0,0.2);
             backdrop-filter: blur(2px);
         }
 
-        /* 蓄力時的狀態 */
+        /* [新功能] 鎖定狀態：完全禁止互動 */
+        .oracle-core.locked {
+            pointer-events: none; /* 關鍵：讓滑鼠點擊無效 */
+            cursor: default;
+        }
+
         .oracle-core.charging {
             transform: scale(0.92);
             box-shadow: 0 0 60px var(--accent-glow), inset 0 0 40px var(--accent-glow);
             border-color: rgba(255, 215, 0, 0.5);
         }
         
-        /* 微幅震動動畫 */
         .oracle-core.vibrating {
             animation: vibrate 0.1s infinite linear;
         }
@@ -147,7 +158,6 @@
             100% { transform: scale(0.92) translate(0, 0); }
         }
 
-        /* 進度條 SVG */
         .progress-svg {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -162,7 +172,6 @@
             filter: drop-shadow(0 0 5px var(--primary-gold));
         }
         
-        /* 內部圖騰 */
         .symbol {
             font-size: 3rem;
             opacity: 0.3;
@@ -176,7 +185,6 @@
             transform: scale(1.1);
         }
 
-        /* 答案顯示 (直接在核心中央) */
         .answer-text {
             position: absolute;
             z-index: 20;
@@ -185,12 +193,12 @@
             font-weight: 700;
             color: var(--primary-gold);
             text-align: center;
-            width: 300px; /* 允許文字超出圓圈 */
+            width: 300px;
             pointer-events: none;
             opacity: 0;
             transform: scale(0.8);
             filter: blur(10px);
-            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* 彈性效果 */
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
             text-shadow: 0 0 30px var(--accent-glow), 0 0 10px var(--primary-gold);
             mix-blend-mode: screen;
         }
@@ -200,9 +208,8 @@
             filter: blur(0);
         }
 
-        /* 底部操作指引 */
         .instruction-wrap {
-            height: 60px; /* 固定高度防止跳動 */
+            height: 60px;
             margin-top: 60px;
             display: flex;
             justify-content: center;
@@ -221,7 +228,6 @@
         }
         .instruction.fade { opacity: 0; transform: translateY(10px); }
 
-        /* Modal (開場) */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -277,7 +283,7 @@
     <canvas id="vfx-canvas"></canvas>
 
     <div class="controls">
-        <div class="ctrl-btn" onclick="resetApp()">
+        <div class="ctrl-btn" id="reset-btn" onclick="resetApp()">
             <span>↺</span> 重置儀式
         </div>
         <div class="ctrl-btn" id="mute-btn" onclick="toggleMute()">
@@ -321,6 +327,7 @@
         const instruction = document.getElementById('instruction');
         const modal = document.getElementById('modal');
         const muteBtn = document.getElementById('mute-btn');
+        const resetBtn = document.getElementById('reset-btn');
 
         // === State ===
         let charge = 0;
@@ -336,7 +343,7 @@
         const ctx = canvas.getContext('2d');
         let w, h, cx, cy;
         let particles = [];
-        let vfxState = 'idle'; // idle, charging, burst
+        let vfxState = 'idle'; 
 
         function resize() {
             w = canvas.width = window.innerWidth;
@@ -396,12 +403,12 @@
                         const angle = Math.atan2(dy, dx);
                         this.x += Math.cos(angle) * this.speed;
                         this.y += Math.sin(angle) * this.speed;
-                        this.speed += 0.2; // 加速吸入
+                        this.speed += 0.2; 
                         this.alpha = 1 - (dist / 300);
                     }
                 } else if (this.type === 'burst' && this.active) {
                     this.x += this.vx; this.y += this.vy;
-                    this.vx *= 0.96; this.vy *= 0.96; // 阻力
+                    this.vx *= 0.96; this.vy *= 0.96;
                     this.life -= this.decay;
                     this.alpha = this.life;
                     if (this.life <= 0) this.active = false;
@@ -416,20 +423,16 @@
             }
         }
 
-        // 初始化粒子池
         const ambientParticles = Array.from({length: 80}, () => new Particle('ambient'));
         const chargeParticles = Array.from({length: 100}, () => new Particle('charge'));
         const burstParticles = Array.from({length: 150}, () => new Particle('burst'));
 
         function animateVFX() {
             ctx.clearRect(0, 0, w, h);
-            // 繪製環境粒子
             ambientParticles.forEach(p => { p.update(); p.draw(); });
-
-            // 根據狀態繪製特效粒子
             if (vfxState === 'charging') {
                 chargeParticles.forEach(p => { 
-                    if(!p.active && Math.random() > 0.8) p.reset(); // 持續生成
+                    if(!p.active && Math.random() > 0.8) p.reset(); 
                     p.update(); p.draw(); 
                 });
             } else if (vfxState === 'burst') {
@@ -440,7 +443,7 @@
         animateVFX();
 
         // ==========================================
-        // === Audio Engine (Web Audio API) ===
+        // === Audio Engine ===
         // ==========================================
         const Audio = {
             ctx: null, masterGain: null, drone: null, chargeOsc: null, isMuted: false,
@@ -485,7 +488,7 @@
             },
             playReveal() {
                 if(this.isMuted) return;
-                [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => { // C Major 7 Chord
+                [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => { 
                     const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
                     osc.type = i===0?'triangle':'sine'; osc.frequency.value = f;
                     gain.gain.setValueAtTime(0, this.ctx.currentTime);
@@ -515,6 +518,11 @@
             answerEl.classList.remove('show');
             core.style.opacity = 1; coreSymbol.style.opacity = 0.3;
             core.style.transform = "scale(1)";
+            
+            // 解除鎖定
+            core.classList.remove('locked');
+            resetBtn.classList.remove('highlight');
+            
             instruction.classList.remove('fade');
             instruction.innerText = "長按核心注入能量";
             core.classList.remove('charging', 'vibrating');
@@ -522,7 +530,7 @@
 
         function startHold(e) {
             if (e.cancelable) e.preventDefault();
-            if (isRevealed) return;
+            if (isRevealed) return; // 雙重保險
             isHolding = true;
             core.classList.add('charging');
             instruction.classList.add('fade');
@@ -549,7 +557,7 @@
 
         function loop() {
             if (!isHolding) return;
-            charge += 0.8; // Charge speed
+            charge += 0.8; 
             updateRing(charge);
             Audio.updateCharge(charge);
             if (charge > 50) core.classList.add('vibrating');
@@ -563,12 +571,17 @@
 
         function reveal() {
             isRevealed = true;
+            // 啟用鎖定：禁止所有滑鼠事件
+            core.classList.add('locked');
+            // 高亮重置按鈕，提示使用者下一步
+            resetBtn.classList.add('highlight');
+
             vfxState = 'burst';
-            burstParticles.forEach(p => p.reset()); // Trigger burst
+            burstParticles.forEach(p => p.reset());
             Audio.playReveal();
             
             core.style.transform = "scale(1.5)";
-            core.style.opacity = 0; // Core fades out
+            core.style.opacity = 0; 
             
             setTimeout(() => {
                 answerEl.innerText = answers[Math.floor(Math.random() * answers.length)];
@@ -576,7 +589,7 @@
             }, 200);
 
             setTimeout(() => {
-                instruction.innerText = "點擊左上角重置儀式";
+                instruction.innerText = "儀式完成";
                 instruction.classList.remove('fade');
             }, 2500);
         }
