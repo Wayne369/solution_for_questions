@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>虛空神諭 | Prismatic Oracle</title>
+    <title>夢境神諭 | Dream Oracle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Noto+Serif+TC:wght@300;500;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400&family=Zen+Maru+Gothic:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* 基礎色調 */
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.6);
+            /* 柔和的夢境色調 */
+            --text-primary: #f0f8ff;
+            --text-secondary: rgba(240, 248, 255, 0.6);
             
-            /* 金色漸層定義 */
-            --gold-gradient: linear-gradient(135deg, #ffd700 0%, #fdb931 50%, #9f7928 100%);
-            --void-gradient: linear-gradient(-45deg, #050505, #1a103c, #0f2027, #000000);
+            /* 極光漸層 */
+            --dream-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --aurora-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            
+            /* 深邃但柔和的背景 */
+            --bg-deep: #0f0c29; 
+            --bg-mid: #302b63;
+            --bg-light: #24243e;
         }
 
         * {
@@ -28,7 +33,8 @@
             margin: 0;
             padding: 0;
             color: var(--text-primary);
-            font-family: 'Cormorant Garamond', 'Noto Serif TC', serif;
+            /* 應用新字體 */
+            font-family: 'Philosopher', 'Zen Maru Gothic', sans-serif;
             overflow: hidden;
             height: 100vh;
             user-select: none;
@@ -37,10 +43,10 @@
             justify-content: center;
             align-items: center;
             
-            /* 動態流體背景 */
-            background: var(--void-gradient);
+            /* 背景流動動畫 */
+            background: linear-gradient(-45deg, var(--bg-deep), var(--bg-mid), var(--bg-light), #1a1a2e);
             background-size: 400% 400%;
-            animation: gradientBG 20s ease infinite;
+            animation: gradientBG 15s ease infinite;
         }
 
         @keyframes gradientBG {
@@ -55,15 +61,15 @@
             width: 100%; height: 100%;
             z-index: 0;
             pointer-events: none;
-            opacity: 0.6; /* 讓背景漸層透出來 */
+            opacity: 0.5;
         }
 
-        /* === UI 控制列 === */
+        /* === UI 控制列 (更圓潤) === */
         .controls {
             position: absolute;
             top: 30px;
             width: 100%;
-            padding: 0 40px;
+            padding: 0 30px;
             display: flex;
             justify-content: space-between;
             z-index: 50;
@@ -71,42 +77,41 @@
 
         .ctrl-btn {
             color: var(--text-secondary);
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1rem;
-            font-weight: 500;
-            letter-spacing: 2px;
+            font-family: 'Philosopher', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
             cursor: pointer;
             transition: all 0.4s ease;
-            text-transform: uppercase;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 16px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 50px; /* 完全圓角 */
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
         }
 
         .ctrl-btn:hover {
-            background: rgba(255, 215, 0, 0.1);
-            border-color: #ffd700;
-            color: #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #fbc2eb;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(251, 194, 235, 0.3);
         }
 
-        /* 重置按鈕高亮動畫 */
         .ctrl-btn.highlight {
-            border-color: #ffd700;
-            color: #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-            animation: pulse-border 2s infinite;
+            border-color: #a18cd1;
+            color: #fff;
+            background: linear-gradient(90deg, rgba(161, 140, 209, 0.2), rgba(251, 194, 235, 0.2));
+            box-shadow: 0 0 25px rgba(161, 140, 209, 0.5);
+            animation: pulse-soft 2s infinite;
         }
 
-        @keyframes pulse-border {
-            0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,215,0,0.5); }
-            100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+        @keyframes pulse-soft {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         /* === 核心互動區 === */
@@ -121,8 +126,8 @@
 
         .core-wrapper {
             position: relative;
-            width: 240px;
-            height: 240px;
+            width: 260px;
+            height: 260px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -138,11 +143,11 @@
             cursor: pointer;
             transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
             
-            /* 核心樣式升級 */
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%);
-            box-shadow: 0 0 30px rgba(138, 43, 226, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(3px);
+            /* 柔和的光暈 */
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 60%);
+            box-shadow: 0 0 40px rgba(161, 140, 209, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
         }
 
         .oracle-core.locked {
@@ -152,22 +157,21 @@
         }
 
         .oracle-core.charging {
-            transform: scale(0.92);
-            /* 蓄力時變成紫色光暈 */
-            box-shadow: 0 0 80px rgba(180, 100, 255, 0.4), inset 0 0 40px rgba(180, 100, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.6);
-            background: radial-gradient(circle, rgba(180, 100, 255, 0.1) 0%, rgba(0,0,0,0) 80%);
+            transform: scale(0.95);
+            /* 蓄力時變成粉紫色極光 */
+            box-shadow: 0 0 80px rgba(251, 194, 235, 0.4), inset 0 0 40px rgba(161, 140, 209, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
         }
         
         .oracle-core.vibrating {
             animation: vibrate 0.08s infinite linear;
         }
         @keyframes vibrate {
-            0% { transform: scale(0.92) translate(0, 0); }
-            25% { transform: scale(0.92) translate(1px, 1px); }
-            50% { transform: scale(0.92) translate(0, 0); }
-            75% { transform: scale(0.92) translate(-1px, -1px); }
-            100% { transform: scale(0.92) translate(0, 0); }
+            0% { transform: scale(0.95) translate(0, 0); }
+            25% { transform: scale(0.95) translate(1px, 1px); }
+            50% { transform: scale(0.95) translate(0, 0); }
+            75% { transform: scale(0.95) translate(-1px, -1px); }
+            100% { transform: scale(0.95) translate(0, 0); }
         }
 
         .progress-svg {
@@ -176,71 +180,74 @@
             transform: rotate(-90deg);
             pointer-events: none;
         }
+        
+        /* 定義 SVG 漸層 */
         .progress-ring-circle {
             transition: stroke-dashoffset 0.1s linear;
-            stroke: url(#goldGradientSVG); /* 使用 SVG 漸層 */
-            stroke-width: 3;
+            stroke: url(#auroraGradient); /* 引用 SVG ID */
+            stroke-width: 4;
+            stroke-linecap: round; /* 圓頭線條 */
             fill: transparent;
-            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+            filter: drop-shadow(0 0 10px rgba(224, 195, 252, 0.6));
         }
         
         .symbol {
-            font-size: 3rem;
-            opacity: 0.4;
+            font-size: 3.5rem;
+            opacity: 0.5;
             transition: all 0.5s;
-            background: var(--gold-gradient);
+            /* 符號漸層 */
+            background: var(--aurora-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .oracle-core:hover .symbol { opacity: 0.8; }
+        .oracle-core:hover .symbol { opacity: 0.9; transform: scale(1.05); }
         .oracle-core.charging .symbol {
             opacity: 1; 
-            transform: scale(1.1);
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 20px rgba(251, 194, 235, 0.8));
         }
 
         .answer-text {
             position: absolute;
             z-index: 20;
-            font-family: 'Noto Serif TC', serif;
-            font-size: 3.2rem;
-            font-weight: 900;
+            font-family: 'Zen Maru Gothic', sans-serif; /* 圓體中文 */
+            font-size: 3rem;
+            font-weight: 700;
             text-align: center;
-            width: 350px;
+            width: 80%;
             pointer-events: none;
             opacity: 0;
-            transform: scale(0.8);
-            filter: blur(15px);
-            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.9) translateY(10px);
+            filter: blur(10px);
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             
-            /* 文字金屬漸層 */
-            background: var(--gold-gradient);
+            /* 文字漸層 */
+            background: linear-gradient(to bottom, #fff 30%, #a18cd1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            /* 讓文字有立體感的光暈 */
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
+            text-shadow: 0 0 30px rgba(161, 140, 209, 0.4);
+            line-height: 1.4;
         }
         .answer-text.show {
             opacity: 1;
-            transform: scale(1);
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+            transform: scale(1) translateY(0);
+            filter: blur(0);
         }
 
         .instruction-wrap {
             height: 60px;
-            margin-top: 70px;
+            margin-top: 80px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         .instruction {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.1rem;
-            letter-spacing: 0.3em;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.2em;
             color: var(--text-secondary);
-            text-transform: uppercase;
             font-weight: 500;
-            opacity: 0.8;
+            opacity: 0.7;
             transition: all 0.5s;
         }
         .instruction.fade { opacity: 0; transform: translateY(10px); }
@@ -249,7 +256,8 @@
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 10, 0.95);
+            background: rgba(15, 12, 41, 0.9);
+            backdrop-filter: blur(15px);
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -259,35 +267,35 @@
         }
         .modal.hidden { opacity: 0; pointer-events: none; }
         .modal h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 3rem;
-            font-weight: 300;
-            letter-spacing: 8px;
-            background: var(--gold-gradient);
+            font-family: 'Philosopher', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            background: var(--aurora-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
-            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(161, 140, 209, 0.3);
         }
         .start-btn {
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
             color: #fff;
             padding: 15px 50px;
             font-size: 1.2rem;
-            font-family: 'Noto Serif TC', serif;
-            letter-spacing: 4px;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
             cursor: pointer;
-            transition: all 0.5s;
+            transition: all 0.4s;
             margin-top: 40px;
-            position: relative;
-            overflow: hidden;
             border-radius: 50px;
         }
         .start-btn:hover {
-            border-color: #ffd700;
-            color: #ffd700;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fbc2eb;
+            box-shadow: 0 0 30px rgba(251, 194, 235, 0.4);
+            transform: translateY(-2px);
         }
 
     </style>
@@ -298,7 +306,7 @@
 
     <div class="controls">
         <div class="ctrl-btn" id="reset-btn" onclick="resetApp()">
-            <span>↺</span> 重置儀式
+            <span>↺</span> 重新連結
         </div>
         <div class="ctrl-btn" id="mute-btn" onclick="toggleMute()">
             <span>🔊</span> 聲音
@@ -306,8 +314,8 @@
     </div>
 
     <div class="modal" id="modal">
-        <h1>Prismatic Oracle</h1>
-        <p style="color: var(--text-secondary); letter-spacing: 2px; font-family:'Noto Serif TC';">開啟聲音・感受共鳴</p>
+        <h1>Dream Oracle</h1>
+        <p style="color: var(--text-secondary); letter-spacing: 2px; font-family:'Zen Maru Gothic';">請開啟聲音・進入夢境</p>
         <button class="start-btn" onclick="initExperience()">開始連結</button>
     </div>
 
@@ -315,18 +323,17 @@
         <div class="core-wrapper">
             <div class="answer-text" id="answer"></div>
             <div class="oracle-core" id="core">
-                <svg class="progress-svg" viewBox="0 0 240 240">
+                <svg class="progress-svg" viewBox="0 0 260 260">
                     <defs>
-                        <linearGradient id="goldGradientSVG" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#fdb931" />
-                            <stop offset="50%" stop-color="#ffd700" />
-                            <stop offset="100%" stop-color="#9f7928" />
+                        <linearGradient id="auroraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#e0c3fc" />
+                            <stop offset="100%" stop-color="#8ec5fc" />
                         </linearGradient>
                     </defs>
                     <circle class="progress-ring-circle" 
-                            cx="120" cy="120" r="115" 
-                            stroke-dasharray="722" 
-                            stroke-dashoffset="722" />
+                            cx="130" cy="130" r="120" 
+                            stroke-dasharray="754" 
+                            stroke-dashoffset="754" />
                 </svg>
                 <div class="symbol" id="core-symbol">✦</div>
             </div>
@@ -338,7 +345,12 @@
     </div>
 
     <script>
-        const answers = ["時機已到", "絕非偶然", "相信直覺", "保持靜默", "大膽前行", "放下執念", "結果驚人", "等待信號", "回歸初心", "尋求盟友", "答案在風中", "稍安勿躁", "謹慎行事", "光在前方", "混沌未明", "這值得冒險", "重新思考", "你是對的", "命運已定", "無需多言"];
+        const answers = [
+            "時機已到", "相信直覺", "保持靜默", "大膽前行", "放下執念", 
+            "結果驚人", "等待信號", "回歸初心", "尋求盟友", "答案在風中", 
+            "稍安勿躁", "謹慎行事", "光在前方", "混沌未明", "值得冒險", 
+            "重新思考", "你是對的", "命運已定", "無需多言", "放手一搏"
+        ];
 
         const core = document.getElementById('core');
         const coreSymbol = document.getElementById('core-symbol');
@@ -353,10 +365,10 @@
         let isHolding = false;
         let isRevealed = false;
         let animFrame;
-        const totalLength = 722; // 2 * PI * 115
+        const totalLength = 754; // 2 * PI * 120
 
         // ==========================================
-        // === VFX Engine (Canvas Particle System) ===
+        // === VFX Engine (Soft & Dreamy) ===
         // ==========================================
         const canvas = document.getElementById('vfx-canvas');
         const ctx = canvas.getContext('2d');
@@ -380,49 +392,50 @@
                 if (this.type === 'ambient') {
                     this.x = Math.random() * w;
                     this.y = Math.random() * h;
-                    this.vx = (Math.random() - 0.5) * 0.3;
-                    this.vy = (Math.random() - 0.5) * 0.3;
-                    this.size = Math.random() * 2;
+                    this.vx = (Math.random() - 0.5) * 0.2;
+                    this.vy = (Math.random() - 0.5) * 0.2;
+                    this.size = Math.random() * 3; // 更大的柔和粒子
                     this.life = Math.random();
-                    // 隨機顏色：金色或淡紫色
-                    this.isGold = Math.random() > 0.5;
+                    // 粉色與藍色系
+                    this.hue = Math.random() > 0.5 ? 260 : 320; 
                 } else if (this.type === 'charge') {
                     const angle = Math.random() * Math.PI * 2;
-                    const dist = 180 + Math.random() * 200;
+                    const dist = 200 + Math.random() * 200;
                     this.x = cx + Math.cos(angle) * dist;
                     this.y = cy + Math.sin(angle) * dist;
                     this.size = Math.random() * 2 + 1;
                     this.speed = 3 + Math.random() * 4;
                     this.active = true;
+                    this.hue = 280;
                 } else if (this.type === 'burst') {
                     this.x = cx; this.y = cy;
                     const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 12 + 5;
+                    const speed = Math.random() * 10 + 3;
                     this.vx = Math.cos(angle) * speed;
                     this.vy = Math.sin(angle) * speed;
-                    this.size = Math.random() * 4 + 1;
+                    this.size = Math.random() * 5 + 2;
                     this.life = 1;
-                    this.decay = Math.random() * 0.02 + 0.01;
+                    this.decay = Math.random() * 0.015 + 0.005;
                     this.active = true;
-                    this.isGold = Math.random() > 0.3; // 70% 金色，30% 紫色
+                    this.hue = Math.random() * 60 + 240; // 藍紫漸層
                 }
             }
             update() {
                 if (this.type === 'ambient') {
                     this.x += this.vx; this.y += this.vy;
-                    this.life += 0.005;
-                    this.alpha = (Math.sin(this.life * 2) + 1) / 2 * 0.4;
+                    this.life += 0.003;
+                    this.alpha = (Math.sin(this.life * 3) + 1) / 2 * 0.3;
                     if(this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
                 } else if (this.type === 'charge' && this.active) {
                     const dx = cx - this.x; const dy = cy - this.y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < 30) { this.active = false; } 
+                    if (dist < 40) { this.active = false; } 
                     else {
                         const angle = Math.atan2(dy, dx);
                         this.x += Math.cos(angle) * this.speed;
                         this.y += Math.sin(angle) * this.speed;
-                        this.speed += 0.3; 
-                        this.alpha = 1 - (dist / 350);
+                        this.speed += 0.2; 
+                        this.alpha = 1 - (dist / 400);
                     }
                 } else if (this.type === 'burst' && this.active) {
                     this.x += this.vx; this.y += this.vy;
@@ -436,29 +449,23 @@
                 if (this.type !== 'ambient' && !this.active) return;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                
-                // 動態配色
-                if (this.type === 'ambient') {
-                    ctx.fillStyle = this.isGold ? 
-                        `rgba(255, 215, 0, ${this.alpha})` : 
-                        `rgba(180, 100, 255, ${this.alpha})`;
-                } else if (this.type === 'charge') {
-                    ctx.fillStyle = `rgba(180, 100, 255, ${this.alpha})`;
-                } else {
-                    ctx.fillStyle = this.isGold ? 
-                        `rgba(255, 230, 100, ${this.alpha})` : 
-                        `rgba(200, 150, 255, ${this.alpha})`;
-                }
+                ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.alpha})`;
+                // 模糊效果讓粒子變柔和
+                ctx.shadowBlur = this.size * 2;
+                ctx.shadowColor = `hsla(${this.hue}, 70%, 70%, ${this.alpha})`;
                 ctx.fill();
+                ctx.shadowBlur = 0; // 重置以防影響效能
             }
         }
 
-        const ambientParticles = Array.from({length: 100}, () => new Particle('ambient'));
-        const chargeParticles = Array.from({length: 120}, () => new Particle('charge'));
-        const burstParticles = Array.from({length: 200}, () => new Particle('burst'));
+        const ambientParticles = Array.from({length: 60}, () => new Particle('ambient'));
+        const chargeParticles = Array.from({length: 100}, () => new Particle('charge'));
+        const burstParticles = Array.from({length: 180}, () => new Particle('burst'));
 
         function animateVFX() {
             ctx.clearRect(0, 0, w, h);
+            // 混合模式讓光暈疊加更美
+            ctx.globalCompositeOperation = 'screen';
             ambientParticles.forEach(p => { p.update(); p.draw(); });
             if (vfxState === 'charging') {
                 chargeParticles.forEach(p => { 
@@ -468,69 +475,57 @@
             } else if (vfxState === 'burst') {
                  burstParticles.forEach(p => { p.update(); p.draw(); });
             }
+            ctx.globalCompositeOperation = 'source-over';
             requestAnimationFrame(animateVFX);
         }
         animateVFX();
 
         // ==========================================
-        // === Audio Engine (Varied & Procedural) ===
+        // === Audio Engine (Varied Scales & Timbres) ===
         // ==========================================
         const Audio = {
             ctx: null, masterGain: null, isMuted: false, chargeOsc: null,
             init() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.masterGain = this.ctx.createGain();
-                this.masterGain.gain.value = 0.25;
+                this.masterGain.gain.value = 0.3;
                 this.masterGain.connect(this.ctx.destination);
                 this.startDrone();
             },
             toggleMute() {
                 this.isMuted = !this.isMuted;
-                if(this.masterGain) this.masterGain.gain.setTargetAtTime(this.isMuted?0:0.25, this.ctx.currentTime, 0.2);
+                if(this.masterGain) this.masterGain.gain.setTargetAtTime(this.isMuted?0:0.3, this.ctx.currentTime, 0.2);
                 return this.isMuted;
             },
             startDrone() {
-                // 背景音使用兩個低頻振盪器產生拍頻，頻率每次隨機微調
-                const osc1 = this.ctx.createOscillator();
-                const osc2 = this.ctx.createOscillator();
+                // 更柔和的背景音 (Sine wave)
+                const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                
-                const baseFreq = 55 + Math.random() * 5; // 隨機基頻
-                osc1.frequency.value = baseFreq; 
-                osc2.frequency.value = baseFreq + 1.5; // 輕微走音產生 "Beating"
-                
-                gain.gain.value = 0.08;
-                osc1.connect(gain); osc2.connect(gain); gain.connect(this.masterGain);
-                osc1.start(); osc2.start();
+                osc.type = 'sine';
+                osc.frequency.value = 110; // A2
+                gain.gain.value = 0.05;
+                osc.connect(gain); gain.connect(this.masterGain);
+                osc.start();
             },
             startCharge() {
                 if(this.isMuted) return;
                 this.chargeOsc = this.ctx.createOscillator();
                 this.chargeGain = this.ctx.createGain();
-                
-                this.chargeOsc.type = 'sawtooth'; 
-                // 每次蓄力的起始音高略有不同
-                this.chargeOsc.frequency.value = 70 + Math.random() * 20;
+                // 使用 Triangle 波，聲音較圓潤
+                this.chargeOsc.type = 'triangle'; 
+                this.chargeOsc.frequency.value = 220;
                 
                 this.chargeGain.gain.setValueAtTime(0, this.ctx.currentTime);
-                this.chargeGain.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime+2);
+                this.chargeGain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime+2);
                 
-                // 加入濾波器讓聲音更有質感
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = "lowpass";
-                filter.frequency.value = 300;
-                
-                this.chargeOsc.connect(filter);
-                filter.connect(this.chargeGain);
+                this.chargeOsc.connect(this.chargeGain);
                 this.chargeGain.connect(this.masterGain);
                 this.chargeOsc.start();
             },
             updateCharge(progress) {
                 if(this.chargeOsc && !this.isMuted) {
-                    // 頻率上升
-                    this.chargeOsc.frequency.setTargetAtTime(80 + progress*3.5, this.ctx.currentTime, 0.1);
-                    // 隨機抖動 (Vibrato)
-                    this.chargeOsc.detune.setValueAtTime(Math.random()*20 - 10, this.ctx.currentTime);
+                    // 平滑的頻率上升
+                    this.chargeOsc.frequency.setTargetAtTime(220 + progress*2, this.ctx.currentTime, 0.1);
                 }
             },
             stopCharge() {
@@ -542,32 +537,41 @@
             },
             playReveal() {
                 if(this.isMuted) return;
-                // C Major 7 基礎頻率，但加入隨機變數
-                const baseNotes = [523.25, 659.25, 783.99, 1046.5];
                 
-                baseNotes.forEach((f,i) => { 
+                // 定義不同的音樂調性 (頻率陣列)
+                const scales = [
+                    [261.63, 329.63, 392.00, 523.25], // C Major (明亮)
+                    [220.00, 261.63, 329.63, 440.00], // A Minor (柔和/憂傷)
+                    [196.00, 246.94, 293.66, 392.00], // G Major (溫暖)
+                    [293.66, 349.23, 440.00, 587.33]  // D Minor (神祕)
+                ];
+
+                // 隨機選擇一個調性
+                const selectedScale = scales[Math.floor(Math.random() * scales.length)];
+                // 隨機選擇一種波形 (音色)
+                const waveform = Math.random() > 0.5 ? 'sine' : 'triangle';
+                // 隨機播放速度
+                const speedFactor = 0.8 + Math.random() * 0.4;
+
+                selectedScale.forEach((f,i) => { 
                     const osc = this.ctx.createOscillator(); 
                     const gain = this.ctx.createGain();
                     
-                    osc.type = i===0 ? 'triangle' : 'sine';
-                    
-                    // 【關鍵升級】每次隨機微調音準 (Detune)，創造 "Chorus" 效果
-                    const randomDetune = (Math.random() - 0.5) * 25; // +/- 12.5 cents
+                    osc.type = waveform;
                     osc.frequency.value = f;
-                    osc.detune.value = randomDetune;
 
-                    // 隨機延遲撥弦 (Strumming effect)
-                    const delay = Math.random() * 0.05;
-                    const startTime = this.ctx.currentTime + delay;
+                    // 琶音效果 (Arpeggio)
+                    const startTime = this.ctx.currentTime + (i * 0.05 * speedFactor);
+                    const duration = 2.0 + Math.random(); // 隨機餘音長度
 
                     gain.gain.setValueAtTime(0, startTime);
-                    gain.gain.linearRampToValueAtTime(0.15/(i+1), startTime + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 4);
+                    gain.gain.linearRampToValueAtTime(0.1, startTime + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
                     
                     osc.connect(gain); 
                     gain.connect(this.masterGain);
                     osc.start(startTime); 
-                    osc.stop(startTime + 4.5);
+                    osc.stop(startTime + duration + 0.5);
                 });
             }
         };
@@ -603,7 +607,7 @@
             
             answerEl.classList.remove('show');
             core.style.opacity = 1; 
-            coreSymbol.style.opacity = 0.4;
+            coreSymbol.style.opacity = 0.5;
             core.style.transform = "scale(1)";
             
             core.classList.remove('locked');
@@ -629,7 +633,7 @@
         }
 
         function endHold(e) {
-            if (!isHolding) return; // 幽靈修正
+            if (!isHolding) return; 
 
             isHolding = false;
             core.classList.remove('charging', 'vibrating');
