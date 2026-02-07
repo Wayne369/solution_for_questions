@@ -142,13 +142,23 @@
         }
         .oracle-core:hover .symbol { opacity: 1; transform: scale(1.1); }
 
+        /* === 修正重點：手機版排版優化 === */
         .answer-text {
             position: absolute; z-index: 1; top: 50%; left: 50%;
-            width: max-content; padding: 0 20px; 
+            
+            /* 修改 1：使用視窗寬度比例，確保不超出螢幕 */
+            width: 90vw; 
+            max-width: 800px; 
+            
             transform: translate(-50%, -50%) scale(0.5); 
             font-family: 'Zen Maru Gothic', sans-serif;
             font-size: 3.5rem; font-weight: 700;
-            text-align: center; white-space: nowrap;
+            text-align: center; 
+            
+            /* 修改 2：允許自動換行，防止長文字被截斷 */
+            white-space: normal; 
+            line-height: 1.4; /* 增加行距，多行時更易讀 */
+            
             pointer-events: none; opacity: 0;
             filter: blur(30px); 
             background: linear-gradient(to bottom, #fff 30%, #a18cd1 100%);
@@ -158,6 +168,13 @@
         
         .answer-text.show { 
             animation: textBurst 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        /* 修改 3：手機版專用設定 (螢幕小於 600px 時) */
+        @media (max-width: 600px) {
+            .answer-text {
+                font-size: 2.2rem; /* 縮小字體以適應手機螢幕 */
+            }
         }
 
         @keyframes textBurst {
