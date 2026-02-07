@@ -89,16 +89,18 @@
             background: rgba(255, 215, 0, 0.05);
         }
 
-        /* 重置按鈕在答案揭曉時會有提示動畫 */
+        /* 重置按鈕高亮動畫 */
         .ctrl-btn.highlight {
             color: var(--primary-gold);
-            animation: pulse-gold 2s infinite;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: rgba(255, 215, 0, 0.05);
+            animation: pulse-border 2s infinite;
         }
 
-        @keyframes pulse-gold {
-            0% { text-shadow: 0 0 5px var(--accent-glow); }
-            50% { text-shadow: 0 0 20px var(--primary-gold); }
-            100% { text-shadow: 0 0 5px var(--accent-glow); }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 5px rgba(255,215,0,0.1); }
+            50% { box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+            100% { box-shadow: 0 0 5px rgba(255,215,0,0.1); }
         }
 
         /* === 核心互動區 === */
@@ -135,10 +137,11 @@
             backdrop-filter: blur(2px);
         }
 
-        /* [新功能] 鎖定狀態：完全禁止互動 */
+        /* 鎖定狀態：視覺上變暗，游標變回預設 */
         .oracle-core.locked {
-            pointer-events: none; /* 關鍵：讓滑鼠點擊無效 */
             cursor: default;
+            opacity: 0 !important; /* 強制隱藏核心 */
+            pointer-events: none;
         }
 
         .oracle-core.charging {
@@ -505,6 +508,8 @@
             modal.classList.add('hidden');
             setTimeout(() => modal.style.display = 'none', 800);
             Audio.init();
+            // 啟用監聽器
+            enableInteractions();
         }
 
         function toggleMute() {
@@ -512,25 +517,46 @@
             muteBtn.querySelector('span').innerText = muted ? '🔇' : '🔊';
         }
 
+        // 監聽器管理 (關鍵修復點)
+        function enableInteractions() {
+            core.addEventListener('mousedown', startHold);
+            core.addEventListener('touchstart', startHold, {passive: false});
+            window.addEventListener('mouseup', endHold);
+            window.addEventListener('touchend', endHold);
+        }
+
+        function disableInteractions() {
+            core.removeEventListener('mousedown', startHold);
+            core.removeEventListener('touchstart', startHold);
+            // 讓 window 的監聽器繼續運作也無妨，因為 endHold 內有 guard，但最好還是移除以防萬一
+            // 這裡我們保留 window 監聽器，但在 endHold 裡做嚴格檢查
+        }
+
         function resetApp() {
             isHolding = false; isRevealed = false; charge = 0;
             updateRing(0); vfxState = 'idle';
+            
             answerEl.classList.remove('show');
-            core.style.opacity = 1; coreSymbol.style.opacity = 0.3;
+            core.style.opacity = 1; 
+            coreSymbol.style.opacity = 0.3;
             core.style.transform = "scale(1)";
             
-            // 解除鎖定
+            // 解除鎖定樣式
             core.classList.remove('locked');
             resetBtn.classList.remove('highlight');
             
             instruction.classList.remove('fade');
             instruction.innerText = "長按核心注入能量";
             core.classList.remove('charging', 'vibrating');
+
+            // 重新綁定事件
+            enableInteractions();
         }
 
         function startHold(e) {
             if (e.cancelable) e.preventDefault();
-            if (isRevealed) return; // 雙重保險
+            if (isRevealed) return; 
+            
             isHolding = true;
             core.classList.add('charging');
             instruction.classList.add('fade');
@@ -539,18 +565,27 @@
             loop();
         }
 
-        function endHold() {
+        function endHold(e) {
+            // [關鍵修復]：如果根本沒在按住狀態，直接忽略。
+            // 這防止了「點擊螢幕任意處」導致觸發舊的 charge 值
+            if (!isHolding) return;
+
             isHolding = false;
             core.classList.remove('charging', 'vibrating');
             Audio.stopCharge();
+
             if (charge >= 100) {
                 reveal();
             } else {
                 vfxState = 'idle';
                 instruction.classList.remove('fade');
                 const rollback = setInterval(() => {
-                    charge -= 6; updateRing(charge);
-                    if (charge <= 0) { clearInterval(rollback); charge = 0; }
+                    charge -= 6; 
+                    if (charge < 0) charge = 0; // 防止負數
+                    updateRing(charge);
+                    if (charge <= 0) { 
+                        clearInterval(rollback); 
+                    }
                 }, 10);
             }
         }
@@ -561,8 +596,15 @@
             updateRing(charge);
             Audio.updateCharge(charge);
             if (charge > 50) core.classList.add('vibrating');
-            if (charge >= 100) endHold();
-            else animFrame = requestAnimationFrame(loop);
+            
+            // 達到 100 自動觸發，不需要等放開
+            if (charge >= 100) {
+                isHolding = false; // 強制停止
+                Audio.stopCharge();
+                reveal();
+            } else {
+                animFrame = requestAnimationFrame(loop);
+            }
         }
 
         function updateRing(percent) {
@@ -571,17 +613,22 @@
 
         function reveal() {
             isRevealed = true;
-            // 啟用鎖定：禁止所有滑鼠事件
+            // [關鍵修復]：揭曉瞬間，立刻歸零能量，防止幽靈觸發
+            charge = 0; 
+            updateRing(0);
+
+            // 移除核心互動
+            disableInteractions();
             core.classList.add('locked');
-            // 高亮重置按鈕，提示使用者下一步
             resetBtn.classList.add('highlight');
 
             vfxState = 'burst';
             burstParticles.forEach(p => p.reset());
             Audio.playReveal();
             
-            core.style.transform = "scale(1.5)";
+            // 核心視覺消失
             core.style.opacity = 0; 
+            core.style.transform = "scale(1.5)";
             
             setTimeout(() => {
                 answerEl.innerText = answers[Math.floor(Math.random() * answers.length)];
@@ -594,10 +641,8 @@
             }, 2500);
         }
 
-        core.addEventListener('mousedown', startHold);
-        core.addEventListener('touchstart', startHold, {passive: false});
-        window.addEventListener('mouseup', endHold);
-        window.addEventListener('touchend', endHold);
+        // 初始化只綁定 resize，互動事件由 initExperience 觸發
+        // 這樣可以防止 modal 未關閉前就誤觸
     </script>
 </body>
 </html>
