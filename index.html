@@ -2,332 +2,412 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mystic Book of Answers</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Void Oracle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #05060a;
-            --text-color: #e0e0ff;
-            --accent-color: #7c4dff;
-            --secondary-accent: #00d2ff;
-            --container-glow: rgba(124, 77, 255, 0.3);
+            --bg-color: #000000;
+            --primary-glow: #a29bfe;
+            --secondary-glow: #6c5ce7;
+            --text-color: #dfe6e9;
         }
 
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
-            /* 加入暗角效果，讓四周更暗，聚焦中心 */
-            background-image: radial-gradient(circle at center, #1a1f35 0%, #05060a 70%);
             color: var(--text-color);
-            font-family: 'Cinzel Decorative', cursive, serif; /* 使用神祕字體 */
+            font-family: 'Cinzel', 'Noto Serif TC', serif;
             overflow: hidden;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 背景微動的星雲感 */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(20,20,50,0.4) 0%, transparent 60%);
+            animation: nebula-move 20s infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes nebula-move {
+            0% { transform: translate(-10%, -10%); }
+            100% { transform: translate(10%, 10%); }
+        }
+
+        #canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none; /* 讓點擊穿透到下層 */
+        }
+
+        .oracle-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
             cursor: pointer;
         }
 
-        /* 加入噪點紋理，增加古老質感 */
-        body::after {
+        /* 中心法陣/按鈕 */
+        .void-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(108, 92, 231, 0.2);
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+        }
+
+        /* 內圈光環 */
+        .void-circle::after {
             content: "";
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 1;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border-radius: 50%;
+            border: 1px dashed rgba(162, 155, 254, 0.4);
+            animation: spin 10s linear infinite;
         }
 
-        #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.6; /* 讓星星稍微暗淡一點，增加深邃感 */
+        .void-circle.charging {
+            transform: scale(0.95);
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 50px var(--secondary-glow), inset 0 0 30px var(--secondary-glow);
         }
 
-        .content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            max-width: 600px;
-            width: 80%;
-            padding: 40px 30px;
-            /* 更深沉的背景和更強的發光邊框 */
-            background: rgba(10, 12, 24, 0.75);
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(124, 77, 255, 0.2);
-            box-shadow: 0 0 40px var(--container-glow), inset 0 0 20px rgba(0, 0, 0, 0.5);
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        .void-circle.charging::after {
+            border-style: solid;
+            border-color: #fff;
+            animation: spin 1s linear infinite; /* 加速旋轉 */
         }
 
-        /* 點擊時的脈衝效果 */
-        .content.pulsing {
-            transform: scale(0.98);
-            box-shadow: 0 0 60px rgba(124, 77, 255, 0.6), inset 0 0 30px rgba(124, 77, 255, 0.2);
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .content:hover:not(.pulsing) {
-            box-shadow: 0 0 50px var(--container-glow), inset 0 0 25px rgba(0, 0, 0, 0.3);
-        }
-
-        h1 {
-            font-size: 1.2rem;
-            letter-spacing: 4px;
-            margin-bottom: 40px;
-            color: rgba(255, 255, 255, 0.6);
+        .prompt-text {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            letter-spacing: 3px;
+            opacity: 0.6;
             text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(124, 77, 255, 0.5);
+            transition: opacity 0.3s;
         }
 
-        #answer-container {
-             min-height: 4em; /* 預留空間 */
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             margin: 30px 0;
-        }
-
-        #answer {
+        .answer-display {
+            position: absolute;
+            top: 20%;
+            width: 80%;
+            text-align: center;
             font-size: 2.5rem;
             font-weight: 700;
-            /* 更神祕的紫金漸層 */
-            background: linear-gradient(135deg, #d4a5ff, #00d2ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            /* 更強烈的發光文字 */
-            filter: drop-shadow(0 0 15px rgba(124, 77, 255, 0.8));
+            text-shadow: 0 0 20px var(--primary-glow);
             opacity: 0;
-            transform: scale(0.9);
-            filter: blur(10px);
-            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
-        #answer.show {
-            opacity: 1;
-            transform: scale(1);
-            filter: blur(0px) drop-shadow(0 0 20px rgba(124, 77, 255, 1));
-        }
-
-        p.instruction {
-            font-family: 'Helvetica Neue', Arial, sans-serif; /* 指引文字保持清晰 */
-            font-size: 0.8rem;
-            color: #8f94b3;
-            letter-spacing: 1px;
-            margin-top: 50px;
-            text-transform: uppercase;
-            opacity: 0.7;
+            transform: translateY(-20px);
             transition: opacity 0.5s;
+            pointer-events: none;
+            mix-blend-mode: screen;
         }
 
-        p.instruction.fade-out {
-            opacity: 0;
-        }
-
-        /* 思考中的載入動畫 */
-        .thinking-loader {
-            display: none;
-        }
-        .thinking-loader.active {
-            display: inline-block;
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-        .thinking-loader.active div {
-            position: absolute;
-            border: 4px solid var(--accent-color);
+        .answer-display.visible {
             opacity: 1;
-            border-radius: 50%;
-            animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+            transform: translateY(0);
         }
-        .thinking-loader.active div:nth-child(2) {
-            animation-delay: -0.5s;
+
+        /* 進度條指示 */
+        .progress-ring {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            transform: rotate(-90deg);
+            pointer-events: none;
         }
-        @keyframes ripple {
-            0% {
-                top: 36px;
-                left: 36px;
-                width: 0;
-                height: 0;
-                opacity: 0;
-            }
-            4.9% {
-                top: 36px;
-                left: 36px;
-                width: 0;
-                height: 0;
-                opacity: 0;
-            }
-            5% {
-                top: 36px;
-                left: 36px;
-                width: 0;
-                height: 0;
-                opacity: 1;
-            }
-            100% {
-                top: 0px;
-                left: 0px;
-                width: 72px;
-                height: 72px;
-                opacity: 0;
-            }
+        
+        .progress-ring circle {
+            fill: transparent;
+            stroke: var(--primary-glow);
+            stroke-width: 4;
+            stroke-dasharray: 472; /* 2 * PI * r (r=75) ≈ 471.2 */
+            stroke-dashoffset: 472;
+            transition: stroke-dashoffset 0.1s linear;
         }
 
     </style>
 </head>
 <body>
 
-    <div id="canvas-container">
-        <canvas id="stars"></canvas>
-    </div>
+    <canvas id="canvas-layer"></canvas>
 
-    <div class="content" id="content-box">
-        <h1>The Mystic Oracle</h1>
-        <div id="answer-container">
-            <div class="thinking-loader" id="loader"><div></div><div></div></div>
-            <div id="answer"></div>
+    <div class="oracle-container" id="touch-zone">
+        <div class="answer-display" id="answer-text"></div>
+
+        <div class="void-circle" id="core">
+            <svg class="progress-ring">
+                <circle cx="80" cy="80" r="75"></circle>
+            </svg>
+            <span style="font-size: 2rem; opacity: 0.8;">✦</span>
         </div>
-        <p class="instruction" id="instruction">Focus your energy upon a question</p>
+
+        <p class="prompt-text" id="prompt">長按注入能量</p>
     </div>
 
     <script>
-        // 神祕版解答資料庫 (語氣更模稜兩可、更具指引性)
+        // === 邏輯設定 ===
         const answers = [
-            "星象顯示為肯定。", "迷霧重重，時機未到。", "傾聽內在的聲音。", "命運之輪尚未轉動。",
-            "意料之外的轉折即將到來。", "保持靜默，觀察。", "勇敢踏入未知。", "答案隱藏在陰影中。",
-            "宇宙對此保持沉默。", "毫無疑問的。", "耐心是必要的試煉。", "前路光明，但需謹慎。",
-            "尋求智慧長者的指引。", "這是一場值得的冒險。", "重新審視你的初衷。", "你已然知曉答案。",
-            "退一步，海闊天空。", "恐懼是你唯一的阻礙。", "這是注定的安排。", "保持信念。"
+            "時機已到", "絕非偶然", "保持靜默", "放下執念",
+            "順其自然", "這是考驗", "相信直覺", "稍安勿躁",
+            "大膽前行", "回歸初心", "尋求盟友", "答案在風中",
+            "並非現在", "結果驚人", "你需要休息", "別回頭看",
+            "光在前方", "混沌未明", "這是命運", "重新思考"
         ];
 
-        const contentBox = document.getElementById('content-box');
-        const answerEl = document.getElementById('answer');
-        const instructionEl = document.getElementById('instruction');
-        const loaderEl = document.getElementById('loader');
-        let isAnimating = false;
-
-        document.body.addEventListener('click', function() {
-            if (isAnimating) return;
-            isAnimating = true;
-
-            // 1. 開始儀式狀態
-            contentBox.classList.add('pulsing');
-            answerEl.classList.remove('show');
-            instructionEl.classList.add('fade-out');
-            
-            // 顯示思考動畫
-            setTimeout(() => {
-                answerEl.innerText = "";
-                loaderEl.classList.add('active');
-            }, 300);
-
-            // 2. 模擬宇宙連結思考時間 (稍長一點，增加懸念)
-            setTimeout(() => {
-                // 停止思考動畫
-                loaderEl.classList.remove('active');
-                contentBox.classList.remove('pulsing');
-
-                // 產生答案
-                const randomAnswer = answers[Math.floor(Math.random() * answers.length)];
-                answerEl.innerText = randomAnswer;
-                answerEl.classList.add('show');
-                
-                // 3. 重置狀態
-                setTimeout(() => {
-                    isAnimating = false;
-                    instructionEl.innerText = "Tap to consult again";
-                    instructionEl.classList.remove('fade-out');
-                }, 1500); // 答案顯示久一點再出現指引
-            }, 1800); // 思考時間
-        });
-
-        // 星空背景 (稍微調整參數，讓星星更慢、更細緻)
-        const canvas = document.getElementById('stars');
+        // === DOM 元素 ===
+        const touchZone = document.getElementById('touch-zone');
+        const core = document.getElementById('core');
+        const prompt = document.getElementById('prompt');
+        const answerText = document.getElementById('answer-text');
+        const progressCircle = document.querySelector('.progress-ring circle');
+        const canvas = document.getElementById('canvas-layer');
         const ctx = canvas.getContext('2d');
-        let width, height;
-        let particles = [];
 
+        // === 狀態變數 ===
+        let isHolding = false;
+        let chargeLevel = 0; // 0 到 100
+        const chargeSpeed = 1.5; // 蓄力速度
+        let animationFrameId;
+        let particles = [];
+        let width, height;
+
+        // === 粒子系統 (背景 + 匯聚效果) ===
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
         }
+        window.addEventListener('resize', resize);
+        resize();
 
         class Particle {
-            constructor() {
+            constructor(type = 'ambient') {
+                this.type = type; // 'ambient' (背景) 或 'suck' (吸入)
                 this.reset();
             }
-            reset() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.size = Math.random() * 1.5; // 星星小一點
-                this.speedX = (Math.random() - 0.5) * 0.2; // 速度慢一點
-                this.speedY = (Math.random() - 0.5) * 0.2;
-                this.opacity = Math.random() * 0.8;
-                this.fadeSpeed = Math.random() * 0.02 + 0.005; // 閃爍速度
-                this.fadingIn = Math.random() > 0.5;
-            }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                
-                // 簡單的閃爍效果
-                if (this.fadingIn) {
-                    this.opacity += this.fadeSpeed;
-                    if (this.opacity >= 1) this.fadingIn = false;
-                } else {
-                    this.opacity -= this.fadeSpeed;
-                    if (this.opacity <= 0.1) this.fadingIn = true;
-                }
 
-                if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
-                    this.reset();
+            reset() {
+                if (this.type === 'ambient') {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.size = Math.random() * 2;
+                    this.alpha = Math.random() * 0.5;
+                } else {
+                    // 吸入粒子：從四周生成
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.max(width, height) / 2;
+                    this.x = width/2 + Math.cos(angle) * dist;
+                    this.y = height/2 + Math.sin(angle) * dist;
+                    this.vx = 0;
+                    this.vy = 0;
+                    this.size = Math.random() * 3 + 1;
+                    this.alpha = 1;
+                    this.speed = Math.random() * 15 + 10;
                 }
             }
+
+            update() {
+                if (this.type === 'ambient') {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) this.reset();
+                } else if (this.type === 'suck') {
+                    // 向中心移動
+                    const dx = width/2 - this.x;
+                    const dy = height/2 - this.y;
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (distance < 50) { // 到達中心
+                        this.reset();
+                    } else {
+                        const angle = Math.atan2(dy, dx);
+                        this.x += Math.cos(angle) * this.speed;
+                        this.y += Math.sin(angle) * this.speed;
+                    }
+                }
+            }
+
             draw() {
-                // 帶點藍紫色的星星
-                ctx.fillStyle = `rgba(200, 200, 255, ${this.opacity})`;
+                ctx.fillStyle = `rgba(162, 155, 254, ${this.alpha})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        function initParticles() {
-            particles = [];
-            // 增加星星數量
-            for (let i = 0; i < 150; i++) {
-                particles.push(new Particle());
+        // 初始化背景粒子
+        for(let i=0; i<50; i++) particles.push(new Particle('ambient'));
+        // 預備吸入粒子池
+        const suckParticles = [];
+        for(let i=0; i<30; i++) suckParticles.push(new Particle('suck'));
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // 繪製背景粒子
+            particles.forEach(p => { p.update(); p.draw(); });
+
+            // 如果正在蓄力，繪製吸入粒子
+            if (isHolding) {
+                suckParticles.forEach(p => { p.update(); p.draw(); });
+            }
+
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // === 互動邏輯 ===
+
+        function startCharge(e) {
+            e.preventDefault(); // 防止手機反白文字
+            if (chargeLevel >= 100) return; // 已經顯示答案就不動作，需重置
+            
+            isHolding = true;
+            core.classList.add('charging');
+            prompt.innerText = "集中精神...";
+            answerText.classList.remove('visible'); // 隱藏舊答案
+            
+            chargeLoop();
+        }
+
+        function stopCharge() {
+            isHolding = false;
+            core.classList.remove('charging');
+            
+            if (chargeLevel < 100) {
+                // 如果沒集滿就放開
+                chargeLevel = 0;
+                updateProgress(0);
+                prompt.innerText = "長按注入能量";
+                cancelAnimationFrame(animationFrameId);
             }
         }
 
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animate);
+        function chargeLoop() {
+            if (!isHolding) return;
+
+            chargeLevel += chargeSpeed;
+            updateProgress(chargeLevel);
+
+            if (chargeLevel >= 100) {
+                isHolding = false; // 停止蓄力
+                core.classList.remove('charging');
+                revealAnswer();
+            } else {
+                animationFrameId = requestAnimationFrame(chargeLoop);
+            }
         }
 
-        window.addEventListener('resize', () => {
-            resize();
-            initParticles();
-        });
+        function updateProgress(percent) {
+            const r = 75;
+            const circumference = 2 * Math.PI * r;
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            
+            // 隨著進度增加震動效果
+            if (percent > 0) {
+                const shake = (percent / 100) * 5;
+                core.style.transform = `scale(0.95) translate(${Math.random()*shake - shake/2}px, ${Math.random()*shake - shake/2}px)`;
+            } else {
+                core.style.transform = `scale(1)`;
+            }
+        }
 
-        resize();
-        initParticles();
-        animate();
+        // === 文字解碼特效 ===
+        function revealAnswer() {
+            prompt.style.opacity = 0;
+            const finalAnswer = answers[Math.floor(Math.random() * answers.length)];
+            answerText.innerText = "";
+            answerText.classList.add('visible');
+            
+            let iterations = 0;
+            const maxIterations = 20; // 跳動次數
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+            
+            const interval = setInterval(() => {
+                // 產生亂碼字串，長度與答案相同
+                answerText.innerText = finalAnswer.split('')
+                    .map((letter, index) => {
+                        if (index < iterations / 3) return finalAnswer[index]; // 逐步定格
+                        return chars[Math.floor(Math.random() * chars.length)];
+                    })
+                    .join('');
+                
+                if (iterations >= maxIterations) {
+                    clearInterval(interval);
+                    answerText.innerText = finalAnswer; // 確保最後顯示正確
+                    
+                    // 重置機制
+                    setTimeout(() => {
+                        prompt.innerText = "點擊法陣重置";
+                        prompt.style.opacity = 1;
+                        core.onclick = resetOracle;
+                        // 移除長按監聽，改為點擊重置
+                        removeListeners();
+                    }, 1000);
+                }
+                iterations++;
+            }, 50); // 每 50ms 變換一次
+        }
+
+        function resetOracle() {
+            chargeLevel = 0;
+            updateProgress(0);
+            answerText.classList.remove('visible');
+            prompt.innerText = "長按注入能量";
+            core.onclick = null; // 移除點擊重置
+            addListeners(); // 加回長按監聽
+        }
+
+        // === 事件監聽綁定 ===
+        function addListeners() {
+            touchZone.addEventListener('mousedown', startCharge);
+            touchZone.addEventListener('touchstart', startCharge);
+            
+            window.addEventListener('mouseup', stopCharge);
+            window.addEventListener('touchend', stopCharge);
+        }
+
+        function removeListeners() {
+            touchZone.removeEventListener('mousedown', startCharge);
+            touchZone.removeEventListener('touchstart', startCharge);
+        }
+
+        addListeners();
+
     </script>
 </body>
 </html>
