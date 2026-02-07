@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宇宙解答之書</title>
+    <title>The Mystic Book of Answers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0d17;
-            --text-color: #ffffff;
-            --accent-color: #a29bfe;
+            --bg-color: #05060a;
+            --text-color: #e0e0ff;
+            --accent-color: #7c4dff;
+            --secondary-accent: #00d2ff;
+            --container-glow: rgba(124, 77, 255, 0.3);
         }
 
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
+            /* 加入暗角效果，讓四周更暗，聚焦中心 */
+            background-image: radial-gradient(circle at center, #1a1f35 0%, #05060a 70%);
             color: var(--text-color);
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Cinzel Decorative', cursive, serif; /* 使用神祕字體 */
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -26,6 +31,19 @@
             cursor: pointer;
         }
 
+        /* 加入噪點紋理，增加古老質感 */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
         #canvas-container {
             position: absolute;
             top: 0;
@@ -33,62 +51,137 @@
             width: 100%;
             height: 100%;
             z-index: 0;
+            opacity: 0.6; /* 讓星星稍微暗淡一點，增加深邃感 */
         }
 
         .content {
+            position: relative;
             z-index: 10;
             text-align: center;
             max-width: 600px;
-            padding: 20px;
-            background: rgba(11, 13, 23, 0.6);
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
+            width: 80%;
+            padding: 40px 30px;
+            /* 更深沉的背景和更強的發光邊框 */
+            background: rgba(10, 12, 24, 0.75);
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 77, 255, 0.2);
+            box-shadow: 0 0 40px var(--container-glow), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        .content:hover {
-            transform: scale(1.02);
+        /* 點擊時的脈衝效果 */
+        .content.pulsing {
+            transform: scale(0.98);
+            box-shadow: 0 0 60px rgba(124, 77, 255, 0.6), inset 0 0 30px rgba(124, 77, 255, 0.2);
+        }
+
+        .content:hover:not(.pulsing) {
+            box-shadow: 0 0 50px var(--container-glow), inset 0 0 25px rgba(0, 0, 0, 0.3);
         }
 
         h1 {
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            opacity: 0.8;
-            font-weight: 300;
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(124, 77, 255, 0.5);
+        }
+
+        #answer-container {
+             min-height: 4em; /* 預留空間 */
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             margin: 30px 0;
         }
 
         #answer {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 700;
-            min-height: 1.2em;
-            background: -webkit-linear-gradient(45deg, #a29bfe, #74b9ff);
+            /* 更神祕的紫金漸層 */
+            background: linear-gradient(135deg, #d4a5ff, #00d2ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(162, 155, 254, 0.3);
-            margin: 20px 0;
+            /* 更強烈的發光文字 */
+            filter: drop-shadow(0 0 15px rgba(124, 77, 255, 0.8));
             opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform: scale(0.9);
+            filter: blur(10px);
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
         #answer.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: scale(1);
+            filter: blur(0px) drop-shadow(0 0 20px rgba(124, 77, 255, 1));
         }
 
         p.instruction {
-            font-size: 0.9rem;
-            color: #b2bec3;
-            margin-top: 40px;
-            animation: pulse 2s infinite;
+            font-family: 'Helvetica Neue', Arial, sans-serif; /* 指引文字保持清晰 */
+            font-size: 0.8rem;
+            color: #8f94b3;
+            letter-spacing: 1px;
+            margin-top: 50px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            transition: opacity 0.5s;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
+        p.instruction.fade-out {
+            opacity: 0;
+        }
+
+        /* 思考中的載入動畫 */
+        .thinking-loader {
+            display: none;
+        }
+        .thinking-loader.active {
+            display: inline-block;
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .thinking-loader.active div {
+            position: absolute;
+            border: 4px solid var(--accent-color);
+            opacity: 1;
+            border-radius: 50%;
+            animation: ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+        .thinking-loader.active div:nth-child(2) {
+            animation-delay: -0.5s;
+        }
+        @keyframes ripple {
+            0% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+            4.9% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 0;
+            }
+            5% {
+                top: 36px;
+                left: 36px;
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                top: 0px;
+                left: 0px;
+                width: 72px;
+                height: 72px;
+                opacity: 0;
+            }
         }
 
     </style>
@@ -99,52 +192,67 @@
         <canvas id="stars"></canvas>
     </div>
 
-    <div class="content" id="click-area">
-        <h1>THE BOOK OF ANSWERS</h1>
-        <div id="answer"></div>
-        <p class="instruction">在心中默念你的問題，然後點擊螢幕</p>
+    <div class="content" id="content-box">
+        <h1>The Mystic Oracle</h1>
+        <div id="answer-container">
+            <div class="thinking-loader" id="loader"><div></div><div></div></div>
+            <div id="answer"></div>
+        </div>
+        <p class="instruction" id="instruction">Focus your energy upon a question</p>
     </div>
 
     <script>
-        // 解答資料庫
+        // 神祕版解答資料庫 (語氣更模稜兩可、更具指引性)
         const answers = [
-            "絕對是。", "現在不是時候。", "相信你的直覺。", "別指望它。",
-            "結果會讓你驚喜。", "專注於當下。", "放手一搏。", "再多思考一下。",
-            "這是不確定的。", "毫無疑問。", "你需要耐心。", "看起來不錯。",
-            "先問問朋友。", "這值得冒險。", "重新考慮你的選擇。", "答案在你自己心中。",
-            "你需要休息一下。", "別被恐懼阻礙。", "這是命運的安排。", "保持樂觀。"
+            "星象顯示為肯定。", "迷霧重重，時機未到。", "傾聽內在的聲音。", "命運之輪尚未轉動。",
+            "意料之外的轉折即將到來。", "保持靜默，觀察。", "勇敢踏入未知。", "答案隱藏在陰影中。",
+            "宇宙對此保持沉默。", "毫無疑問的。", "耐心是必要的試煉。", "前路光明，但需謹慎。",
+            "尋求智慧長者的指引。", "這是一場值得的冒險。", "重新審視你的初衷。", "你已然知曉答案。",
+            "退一步，海闊天空。", "恐懼是你唯一的阻礙。", "這是注定的安排。", "保持信念。"
         ];
 
+        const contentBox = document.getElementById('content-box');
         const answerEl = document.getElementById('answer');
-        const instructionEl = document.querySelector('.instruction');
+        const instructionEl = document.getElementById('instruction');
+        const loaderEl = document.getElementById('loader');
         let isAnimating = false;
 
-        // 點擊互動邏輯
         document.body.addEventListener('click', function() {
             if (isAnimating) return;
             isAnimating = true;
 
-            // 隱藏舊答案
+            // 1. 開始儀式狀態
+            contentBox.classList.add('pulsing');
             answerEl.classList.remove('show');
-            instructionEl.style.opacity = '0';
+            instructionEl.classList.add('fade-out');
             
-            // 模擬思考延遲
+            // 顯示思考動畫
             setTimeout(() => {
+                answerEl.innerText = "";
+                loaderEl.classList.add('active');
+            }, 300);
+
+            // 2. 模擬宇宙連結思考時間 (稍長一點，增加懸念)
+            setTimeout(() => {
+                // 停止思考動畫
+                loaderEl.classList.remove('active');
+                contentBox.classList.remove('pulsing');
+
+                // 產生答案
                 const randomAnswer = answers[Math.floor(Math.random() * answers.length)];
                 answerEl.innerText = randomAnswer;
                 answerEl.classList.add('show');
                 
-                // 重置狀態
+                // 3. 重置狀態
                 setTimeout(() => {
                     isAnimating = false;
-                    instructionEl.innerText = "點擊螢幕再次提問";
-                    instructionEl.style.opacity = ''; 
-                    instructionEl.style.animation = 'pulse 2s infinite';
-                }, 500);
-            }, 300);
+                    instructionEl.innerText = "Tap to consult again";
+                    instructionEl.classList.remove('fade-out');
+                }, 1500); // 答案顯示久一點再出現指引
+            }, 1800); // 思考時間
         });
 
-        // 星空背景動畫 (Canvas)
+        // 星空背景 (稍微調整參數，讓星星更慢、更細緻)
         const canvas = document.getElementById('stars');
         const ctx = canvas.getContext('2d');
         let width, height;
@@ -162,20 +270,33 @@
             reset() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.size = Math.random() * 2;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.speedY = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random();
+                this.size = Math.random() * 1.5; // 星星小一點
+                this.speedX = (Math.random() - 0.5) * 0.2; // 速度慢一點
+                this.speedY = (Math.random() - 0.5) * 0.2;
+                this.opacity = Math.random() * 0.8;
+                this.fadeSpeed = Math.random() * 0.02 + 0.005; // 閃爍速度
+                this.fadingIn = Math.random() > 0.5;
             }
             update() {
                 this.x += this.speedX;
                 this.y += this.speedY;
+                
+                // 簡單的閃爍效果
+                if (this.fadingIn) {
+                    this.opacity += this.fadeSpeed;
+                    if (this.opacity >= 1) this.fadingIn = false;
+                } else {
+                    this.opacity -= this.fadeSpeed;
+                    if (this.opacity <= 0.1) this.fadingIn = true;
+                }
+
                 if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
                     this.reset();
                 }
             }
             draw() {
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                // 帶點藍紫色的星星
+                ctx.fillStyle = `rgba(200, 200, 255, ${this.opacity})`;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -184,7 +305,8 @@
 
         function initParticles() {
             particles = [];
-            for (let i = 0; i < 100; i++) {
+            // 增加星星數量
+            for (let i = 0; i < 150; i++) {
                 particles.push(new Particle());
             }
         }
