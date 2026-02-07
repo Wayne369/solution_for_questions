@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ethereal Oracle</title>
+    <title>Celestial Oracle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Serif+TC:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Noto+Serif+TC:wght@200;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #08080c;
-            --accent-color: #d4af37; /* 像是燙金的質感 */
-            --glow-color: rgba(212, 175, 55, 0.4);
-            --text-color: #e0e0e0;
-            --secondary-text: #888899;
+            --bg-color: #020205;
+            --primary-gold: #ffd700; /* 更純粹的金色 */
+            --accent-glow: rgba(255, 215, 0, 0.6);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
         }
 
         * {
@@ -26,70 +26,72 @@
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-primary);
             font-family: 'Cormorant Garamond', 'Noto Serif TC', serif;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             user-select: none;
             touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* 背景：深邃的徑向漸層 */
-        body::before {
+        /* Canvas 粒子層 (最底層) */
+        #vfx-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 背景氛圍暈影 */
+        body::after {
             content: "";
             position: absolute;
-            width: 150%; height: 150%;
-            background: radial-gradient(circle at 50% 50%, #1c1c2e 0%, #050508 60%);
-            animation: breathe 10s infinite alternate;
-            z-index: -2;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, var(--bg-color) 80%);
+            z-index: 1;
+            pointer-events: none;
         }
 
-        @keyframes breathe {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.05); opacity: 1; }
-        }
-
-        /* 控制列 (Home & Mute) */
+        /* === UI 控制列 === */
         .controls {
             position: absolute;
-            top: 20px;
+            top: 30px;
             width: 100%;
-            padding: 0 30px;
+            padding: 0 40px;
             display: flex;
             justify-content: space-between;
             z-index: 50;
-            pointer-events: none; /* 讓中間不擋住操作 */
         }
 
         .ctrl-btn {
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-            padding: 10px 15px;
-            border-radius: 50px;
+            color: var(--text-secondary);
             font-family: 'Cormorant Garamond', serif;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 2px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.4s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
         }
+
+        .ctrl-btn span { font-size: 1.2rem; }
 
         .ctrl-btn:hover {
-            background: var(--accent-color);
-            color: #000;
-            border-color: var(--accent-color);
+            color: var(--primary-gold);
+            text-shadow: 0 0 10px var(--accent-glow);
+            background: rgba(255, 215, 0, 0.05);
         }
 
-        /* 核心區域 */
+        /* === 核心互動區 === */
         .container {
             position: relative;
             z-index: 10;
@@ -97,487 +99,492 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
         }
 
-        /* 法陣 (互動核心) */
-        .oracle-core {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
+        /* 包裹核心和答案的容器，用於定位 */
+        .core-wrapper {
             position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 法陣核心 */
+        .oracle-core {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            position: absolute;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            /* 核心發光 */
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.1), inset 0 0 20px rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
         }
 
-        /* 外圈裝飾線 */
-        .oracle-core::before {
-            content: "";
-            position: absolute;
-            top: -15px; left: -15px; right: -15px; bottom: -15px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-            transform: scale(0.8);
-            transition: transform 0.5s;
+        /* 蓄力時的狀態 */
+        .oracle-core.charging {
+            transform: scale(0.92);
+            box-shadow: 0 0 60px var(--accent-glow), inset 0 0 40px var(--accent-glow);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        
+        /* 微幅震動動畫 */
+        .oracle-core.vibrating {
+            animation: vibrate 0.1s infinite linear;
+        }
+        @keyframes vibrate {
+            0% { transform: scale(0.92) translate(0, 0); }
+            25% { transform: scale(0.92) translate(1px, 1px); }
+            50% { transform: scale(0.92) translate(0, 0); }
+            75% { transform: scale(0.92) translate(-1px, -1px); }
+            100% { transform: scale(0.92) translate(0, 0); }
         }
 
-        .oracle-core:hover::before {
-            transform: scale(1);
-        }
-
-        /* 能量 SVG */
-        .progress-ring-circle {
+        /* 進度條 SVG */
+        .progress-svg {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
             transform: rotate(-90deg);
-            transform-origin: 50% 50%;
+            pointer-events: none;
+        }
+        .progress-ring-circle {
             transition: stroke-dashoffset 0.1s linear;
-            stroke: var(--accent-color);
-            stroke-width: 2;
+            stroke: var(--primary-gold);
+            stroke-width: 3;
             fill: transparent;
-            filter: drop-shadow(0 0 8px var(--glow-color));
+            filter: drop-shadow(0 0 5px var(--primary-gold));
         }
         
         /* 內部圖騰 */
         .symbol {
-            font-size: 2rem;
-            opacity: 0.5;
-            transition: all 0.3s;
-            color: var(--text-color);
-        }
-
-        .oracle-core.charging .symbol {
-            opacity: 1;
-            transform: scale(1.2);
-            color: var(--accent-color);
-            text-shadow: 0 0 15px var(--accent-color);
-        }
-
-        .oracle-core.shake {
-            animation: shake-hard 0.1s infinite;
-        }
-
-        @keyframes shake-hard {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            100% { transform: translate(-1px, -2px) rotate(-1deg); }
-        }
-
-        /* 提示文字 */
-        .instruction {
-            margin-top: 50px;
-            font-size: 1rem;
-            letter-spacing: 0.2em;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-            font-weight: 300;
-            opacity: 0.7;
-            transition: opacity 0.5s;
-        }
-
-        /* 答案顯示區 */
-        .answer-display {
-            position: absolute;
-            top: 20%;
-            width: 90%;
-            text-align: center;
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .answer-text {
-            font-family: 'Noto Serif TC', serif;
             font-size: 3rem;
-            font-weight: 600;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.3);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            opacity: 0.3;
+            transition: all 0.5s;
+            color: var(--primary-gold);
+        }
+        .oracle-core:hover .symbol { opacity: 0.6; }
+        .oracle-core.charging .symbol {
+            opacity: 1; color: #fff;
+            text-shadow: 0 0 20px var(--primary-gold);
+            transform: scale(1.1);
         }
 
+        /* 答案顯示 (直接在核心中央) */
+        .answer-text {
+            position: absolute;
+            z-index: 20;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+            text-align: center;
+            width: 300px; /* 允許文字超出圓圈 */
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+            filter: blur(10px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* 彈性效果 */
+            text-shadow: 0 0 30px var(--accent-glow), 0 0 10px var(--primary-gold);
+            mix-blend-mode: screen;
+        }
         .answer-text.show {
             opacity: 1;
-            transform: translateY(0);
-            text-shadow: 0 0 30px var(--glow-color);
+            transform: scale(1);
+            filter: blur(0);
         }
 
-        /* Modal */
+        /* 底部操作指引 */
+        .instruction-wrap {
+            height: 60px; /* 固定高度防止跳動 */
+            margin-top: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .instruction {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.3em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 500;
+            opacity: 0.8;
+            transition: all 0.5s;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .instruction.fade { opacity: 0; transform: translateY(10px); }
+
+        /* Modal (開場) */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(2, 2, 5, 0.95);
             z-index: 100;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.6s;
+            transition: opacity 0.8s ease-in-out;
         }
-
-        .modal.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
+        .modal.hidden { opacity: 0; pointer-events: none; }
         .modal h1 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 300;
-            letter-spacing: 5px;
-            color: var(--accent-color);
-            margin-bottom: 30px;
+            letter-spacing: 8px;
+            color: var(--primary-gold);
+            margin-bottom: 20px;
             text-transform: uppercase;
+            text-shadow: 0 0 20px var(--accent-glow);
         }
-
         .start-btn {
             background: transparent;
-            border: 1px solid var(--secondary-text);
-            color: var(--text-color);
-            padding: 12px 40px;
-            font-size: 1.1rem;
+            border: 1px solid var(--primary-gold);
+            color: var(--primary-gold);
+            padding: 15px 50px;
+            font-size: 1.2rem;
             font-family: 'Noto Serif TC', serif;
-            letter-spacing: 2px;
+            letter-spacing: 4px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.5s;
+            margin-top: 40px;
+            position: relative;
+            overflow: hidden;
         }
-
+        .start-btn::before {
+            content: ""; position: absolute;
+            top:0; left:-100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent);
+            transition: 0.5s;
+        }
         .start-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            background: rgba(255, 215, 0, 0.1);
+            box-shadow: 0 0 30px var(--accent-glow);
         }
+        .start-btn:hover::before { left: 100%; }
 
     </style>
 </head>
 <body>
 
+    <canvas id="vfx-canvas"></canvas>
+
     <div class="controls">
         <div class="ctrl-btn" onclick="resetApp()">
-            <span>↺</span> 重置
+            <span>↺</span> 重置儀式
         </div>
         <div class="ctrl-btn" id="mute-btn" onclick="toggleMute()">
-            <span>🔊</span>
+            <span>🔊</span> 聲音
         </div>
     </div>
 
     <div class="modal" id="modal">
-        <h1>Void Oracle</h1>
-        <p style="color: #666; margin-bottom: 40px; letter-spacing: 2px; font-size: 0.9rem;">開啟聲音以獲得最佳體驗</p>
-        <button class="start-btn" onclick="initExperience()">進入儀式</button>
+        <h1>Celestial Oracle</h1>
+        <p style="color: var(--text-secondary); letter-spacing: 2px; font-family:'Noto Serif TC';">請開啟聲音以獲得完整體驗</p>
+        <button class="start-btn" onclick="initExperience()">開始連結</button>
     </div>
 
     <div class="container">
-        
-        <div class="answer-display">
+        <div class="core-wrapper">
             <div class="answer-text" id="answer"></div>
+            <div class="oracle-core" id="core">
+                <svg class="progress-svg" viewBox="0 0 220 220">
+                    <circle class="progress-ring-circle" 
+                            cx="110" cy="110" r="105" 
+                            stroke-dasharray="660" 
+                            stroke-dashoffset="660" />
+                </svg>
+                <div class="symbol" id="core-symbol">✦</div>
+            </div>
         </div>
 
-        <div class="oracle-core" id="core">
-            <svg width="180" height="180" style="position: absolute; top:0; left:0; pointer-events: none;">
-                <circle class="progress-ring-circle" 
-                        stroke="white" 
-                        stroke-width="1" 
-                        fill="transparent" 
-                        r="88" 
-                        cx="90" 
-                        cy="90" 
-                        stroke-dasharray="552" 
-                        stroke-dashoffset="552" />
-            </svg>
-            <div class="symbol">✦</div>
+        <div class="instruction-wrap">
+            <p class="instruction" id="instruction">長按核心注入能量</p>
         </div>
-
-        <p class="instruction" id="instruction">長按連結宇宙意識</p>
     </div>
 
     <script>
-        // === 資料庫 ===
-        const answers = [
-            "無需多言", "時機未到", "聽從內心", "保持靜默",
-            "大膽前行", "放下執念", "結果驚人", "等待信號",
-            "絕非偶然", "尋求盟友", "回歸初心", "答案在風中",
-            "稍安勿躁", "謹慎行事", "光在前方", "混沌未明",
-            "這值得冒險", "重新思考", "你是對的", "命運已定"
-        ];
+        const answers = ["時機已到", "絕非偶然", "相信直覺", "保持靜默", "大膽前行", "放下執念", "結果驚人", "等待信號", "回歸初心", "尋求盟友", "答案在風中", "稍安勿躁", "謹慎行事", "光在前方", "混沌未明", "這值得冒險", "重新思考", "你是對的", "命運已定", "無需多言"];
 
-        // === 音效引擎 (Web Audio API) ===
-        // 使用程式碼生成音效，不需外部檔案
-        const AudioEngine = {
-            ctx: null,
-            masterGain: null,
-            droneOsc: null,
-            isMuted: false,
-
-            init() {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-                this.masterGain = this.ctx.createGain();
-                this.masterGain.gain.value = 0.3; // 整體音量
-                this.masterGain.connect(this.ctx.destination);
-            },
-
-            toggleMute() {
-                this.isMuted = !this.isMuted;
-                if (this.masterGain) {
-                    this.masterGain.gain.setTargetAtTime(this.isMuted ? 0 : 0.3, this.ctx.currentTime, 0.1);
-                }
-                return this.isMuted;
-            },
-
-            // 背景低頻嗡嗡聲
-            startDrone() {
-                if (!this.ctx) return;
-                // 創建兩個振盪器產生拍頻 (Beats)
-                const osc1 = this.ctx.createOscillator();
-                const osc2 = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                osc1.type = 'sine';
-                osc2.type = 'triangle';
-                osc1.frequency.value = 55; // 低音 A
-                osc2.frequency.value = 57; // 稍微走音產生波動感
-                
-                gain.gain.value = 0.1;
-                
-                osc1.connect(gain);
-                osc2.connect(gain);
-                gain.connect(this.masterGain);
-                
-                osc1.start();
-                osc2.start();
-                this.droneOsc = { osc1, osc2, gain };
-            },
-
-            // 蓄力音效 (頻率爬升)
-            playCharge(progress) {
-                if (!this.ctx || this.isMuted) return;
-                // 這裡我們用一個簡單的即時合成音，不做太複雜的連續音
-                // 為了效能，我們只在關鍵節點觸發微弱的電流聲，或者用視覺代替
-                // 真正的 Shepard Tone 實作較複雜，這裡用簡單的短音頻模擬
-            },
-
-            // 揭曉音效 (空靈鐘聲)
-            playReveal() {
-                if (!this.ctx || this.isMuted) return;
-                const now = this.ctx.currentTime;
-                
-                // 產生一個大三和弦
-                const freqs = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
-                
-                freqs.forEach((f, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    
-                    osc.type = 'sine';
-                    osc.frequency.value = f;
-                    
-                    // 包絡線 (Envelope): 快速攻擊，長釋放
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(0.1 / (i+1), now + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 3);
-                    
-                    osc.connect(gain);
-                    gain.connect(this.masterGain);
-                    
-                    osc.start(now);
-                    osc.stop(now + 3.5);
-                });
-            },
-
-            // 失敗/取消音效
-            playCancel() {
-                if (!this.ctx || this.isMuted) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-                osc.frequency.linearRampToValueAtTime(50, this.ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
-                
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.3);
-            },
-            
-            // 蓄力時的電流聲 (持續音)
-            chargeOsc: null,
-            chargeGain: null,
-            startChargeSound() {
-                if (!this.ctx || this.isMuted) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                osc.type = 'sawtooth';
-                osc.frequency.value = 50;
-                
-                // 低通濾波器讓聲音變悶
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.value = 400;
-
-                gain.gain.setValueAtTime(0, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 1); // 漸強
-
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.masterGain);
-                
-                osc.start();
-                this.chargeOsc = osc;
-                this.chargeGain = gain;
-            },
-
-            updateChargePitch(percent) {
-                if (this.chargeOsc) {
-                    // 隨著進度提高頻率
-                    const baseFreq = 50;
-                    this.chargeOsc.frequency.setTargetAtTime(baseFreq + (percent * 2), this.ctx.currentTime, 0.1);
-                }
-            },
-
-            stopChargeSound() {
-                if (this.chargeOsc) {
-                    const now = this.ctx.currentTime;
-                    this.chargeGain.gain.linearRampToValueAtTime(0, now + 0.1);
-                    this.chargeOsc.stop(now + 0.1);
-                    this.chargeOsc = null;
-                }
-            }
-        };
-
-        // === 邏輯控制 ===
+        // === DOM Elements ===
         const core = document.getElementById('core');
+        const coreSymbol = document.getElementById('core-symbol');
         const ring = document.querySelector('.progress-ring-circle');
         const answerEl = document.getElementById('answer');
         const instruction = document.getElementById('instruction');
         const modal = document.getElementById('modal');
         const muteBtn = document.getElementById('mute-btn');
 
+        // === State ===
         let charge = 0;
         let isHolding = false;
-        let animFrame;
-        const totalLength = 552; // 圓周長 2 * PI * 88
         let isRevealed = false;
+        let animFrame;
+        const totalLength = 660; // 2 * PI * 105
 
-        // 初始化
+        // ==========================================
+        // === VFX Engine (Canvas Particle System) ===
+        // ==========================================
+        const canvas = document.getElementById('vfx-canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h, cx, cy;
+        let particles = [];
+        let vfxState = 'idle'; // idle, charging, burst
+
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            cx = w / 2; cy = h / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor(type) {
+                this.type = type;
+                this.reset();
+            }
+            reset() {
+                if (this.type === 'ambient') {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.vx = (Math.random() - 0.5) * 0.2;
+                    this.vy = (Math.random() - 0.5) * 0.2;
+                    this.size = Math.random() * 1.5 + 0.5;
+                    this.life = Math.random();
+                    this.color = 'rgba(255, 215, 0, ';
+                } else if (this.type === 'charge') {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 150 + Math.random() * 200;
+                    this.x = cx + Math.cos(angle) * dist;
+                    this.y = cy + Math.sin(angle) * dist;
+                    this.size = Math.random() * 2 + 1;
+                    this.speed = 2 + Math.random() * 3;
+                    this.color = 'rgba(255, 230, 100, ';
+                    this.active = true;
+                } else if (this.type === 'burst') {
+                    this.x = cx; this.y = cy;
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 15 + 5;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.size = Math.random() * 3 + 2;
+                    this.life = 1;
+                    this.decay = Math.random() * 0.02 + 0.015;
+                    this.color = 'rgba(255, 255, 200, ';
+                    this.active = true;
+                }
+            }
+            update() {
+                if (this.type === 'ambient') {
+                    this.x += this.vx; this.y += this.vy;
+                    this.life += 0.01;
+                    this.alpha = (Math.sin(this.life) + 1) / 2 * 0.5;
+                    if(this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
+                } else if (this.type === 'charge' && this.active) {
+                    const dx = cx - this.x; const dy = cy - this.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 30) { this.active = false; } 
+                    else {
+                        const angle = Math.atan2(dy, dx);
+                        this.x += Math.cos(angle) * this.speed;
+                        this.y += Math.sin(angle) * this.speed;
+                        this.speed += 0.2; // 加速吸入
+                        this.alpha = 1 - (dist / 300);
+                    }
+                } else if (this.type === 'burst' && this.active) {
+                    this.x += this.vx; this.y += this.vy;
+                    this.vx *= 0.96; this.vy *= 0.96; // 阻力
+                    this.life -= this.decay;
+                    this.alpha = this.life;
+                    if (this.life <= 0) this.active = false;
+                }
+            }
+            draw() {
+                if (this.type !== 'ambient' && !this.active) return;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + this.alpha + ')';
+                ctx.fill();
+            }
+        }
+
+        // 初始化粒子池
+        const ambientParticles = Array.from({length: 80}, () => new Particle('ambient'));
+        const chargeParticles = Array.from({length: 100}, () => new Particle('charge'));
+        const burstParticles = Array.from({length: 150}, () => new Particle('burst'));
+
+        function animateVFX() {
+            ctx.clearRect(0, 0, w, h);
+            // 繪製環境粒子
+            ambientParticles.forEach(p => { p.update(); p.draw(); });
+
+            // 根據狀態繪製特效粒子
+            if (vfxState === 'charging') {
+                chargeParticles.forEach(p => { 
+                    if(!p.active && Math.random() > 0.8) p.reset(); // 持續生成
+                    p.update(); p.draw(); 
+                });
+            } else if (vfxState === 'burst') {
+                 burstParticles.forEach(p => { p.update(); p.draw(); });
+            }
+            requestAnimationFrame(animateVFX);
+        }
+        animateVFX();
+
+        // ==========================================
+        // === Audio Engine (Web Audio API) ===
+        // ==========================================
+        const Audio = {
+            ctx: null, masterGain: null, drone: null, chargeOsc: null, isMuted: false,
+            init() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.25;
+                this.masterGain.connect(this.ctx.destination);
+                this.startDrone();
+            },
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                if(this.masterGain) this.masterGain.gain.setTargetAtTime(this.isMuted?0:0.25, this.ctx.currentTime, 0.2);
+                return this.isMuted;
+            },
+            startDrone() {
+                const osc1 = this.ctx.createOscillator(), osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc1.frequency.value = 60; osc2.frequency.value = 62; 
+                gain.gain.value = 0.08;
+                osc1.connect(gain); osc2.connect(gain); gain.connect(this.masterGain);
+                osc1.start(); osc2.start(); this.drone = {osc1, osc2, gain};
+            },
+            startCharge() {
+                if(this.isMuted) return;
+                this.chargeOsc = this.ctx.createOscillator();
+                this.chargeGain = this.ctx.createGain();
+                this.chargeOsc.type = 'sawtooth'; this.chargeOsc.frequency.value = 80;
+                this.chargeGain.gain.setValueAtTime(0, this.ctx.currentTime);
+                this.chargeGain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime+2);
+                this.chargeOsc.connect(this.chargeGain); this.chargeGain.connect(this.masterGain);
+                this.chargeOsc.start();
+            },
+            updateCharge(progress) {
+                if(this.chargeOsc && !this.isMuted) this.chargeOsc.frequency.setTargetAtTime(80 + progress*3, this.ctx.currentTime, 0.1);
+            },
+            stopCharge() {
+                if(this.chargeOsc) {
+                    this.chargeGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.2);
+                    this.chargeOsc.stop(this.ctx.currentTime+0.2); this.chargeOsc = null;
+                }
+            },
+            playReveal() {
+                if(this.isMuted) return;
+                [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => { // C Major 7 Chord
+                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = i===0?'triangle':'sine'; osc.frequency.value = f;
+                    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.15/(i+1), this.ctx.currentTime+0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+4);
+                    osc.connect(gain); gain.connect(this.masterGain);
+                    osc.start(); osc.stop(this.ctx.currentTime+4.5);
+                });
+            }
+        };
+
+        // === Application Logic ===
         function initExperience() {
             modal.classList.add('hidden');
-            AudioEngine.init();
-            AudioEngine.startDrone();
+            setTimeout(() => modal.style.display = 'none', 800);
+            Audio.init();
         }
 
-        // 靜音切換
         function toggleMute() {
-            const muted = AudioEngine.toggleMute();
-            muteBtn.innerHTML = muted ? "<span>🔇</span>" : "<span>🔊</span>";
-            muteBtn.style.opacity = muted ? "0.5" : "1";
+            const muted = Audio.toggleMute();
+            muteBtn.querySelector('span').innerText = muted ? '🔇' : '🔊';
         }
 
-        // 重置 APP
         function resetApp() {
-            isHolding = false;
-            isRevealed = false;
-            charge = 0;
-            updateRing(0);
-            
+            isHolding = false; isRevealed = false; charge = 0;
+            updateRing(0); vfxState = 'idle';
             answerEl.classList.remove('show');
-            setTimeout(() => { answerEl.innerText = ""; }, 500);
-            
-            instruction.style.opacity = 1;
-            instruction.innerText = "長按連結宇宙意識";
-            
+            core.style.opacity = 1; coreSymbol.style.opacity = 0.3;
             core.style.transform = "scale(1)";
-            core.classList.remove('shake');
-            core.classList.remove('charging');
+            instruction.classList.remove('fade');
+            instruction.innerText = "長按核心注入能量";
+            core.classList.remove('charging', 'vibrating');
         }
 
-        // 互動事件
         function startHold(e) {
             if (e.cancelable) e.preventDefault();
             if (isRevealed) return;
-
             isHolding = true;
             core.classList.add('charging');
-            instruction.style.opacity = 0.5;
-            
-            AudioEngine.startChargeSound(); // 開始蓄力音效
+            instruction.classList.add('fade');
+            vfxState = 'charging';
+            Audio.startCharge();
             loop();
         }
 
         function endHold() {
             isHolding = false;
-            core.classList.remove('charging');
-            core.classList.remove('shake');
-            AudioEngine.stopChargeSound(); // 停止蓄力音效
-
+            core.classList.remove('charging', 'vibrating');
+            Audio.stopCharge();
             if (charge >= 100) {
                 reveal();
             } else {
-                // 回退
-                AudioEngine.playCancel(); // 播放取消音效
+                vfxState = 'idle';
+                instruction.classList.remove('fade');
                 const rollback = setInterval(() => {
-                    charge -= 5;
-                    updateRing(charge);
-                    if (charge <= 0) {
-                        clearInterval(rollback);
-                        charge = 0;
-                    }
+                    charge -= 6; updateRing(charge);
+                    if (charge <= 0) { clearInterval(rollback); charge = 0; }
                 }, 10);
             }
         }
 
         function loop() {
             if (!isHolding) return;
-
-            charge += 1; // 蓄力速度
+            charge += 0.8; // Charge speed
             updateRing(charge);
-            AudioEngine.updateChargePitch(charge); // 更新音效頻率
-
-            // 震動特效
-            if (charge > 30) {
-                core.classList.add('shake');
-            }
-
-            if (charge >= 100) {
-                endHold();
-            } else {
-                animFrame = requestAnimationFrame(loop);
-            }
+            Audio.updateCharge(charge);
+            if (charge > 50) core.classList.add('vibrating');
+            if (charge >= 100) endHold();
+            else animFrame = requestAnimationFrame(loop);
         }
 
         function updateRing(percent) {
-            const offset = totalLength - (percent / 100) * totalLength;
-            ring.style.strokeDashoffset = offset;
+            ring.style.strokeDashoffset = totalLength - (percent / 100) * totalLength;
         }
 
         function reveal() {
             isRevealed = true;
-            instruction.style.opacity = 0;
-            core.style.transform = "scale(0)"; // 核心縮小消失
+            vfxState = 'burst';
+            burstParticles.forEach(p => p.reset()); // Trigger burst
+            Audio.playReveal();
             
-            AudioEngine.playReveal(); // 播放揭曉音效 (叮~)
-
-            const finalAnswer = answers[Math.floor(Math.random() * answers.length)];
-            answerEl.innerText = finalAnswer;
-            answerEl.classList.add('show');
-
-            // 自動重置引導 (或是等待使用者按 Reset)
+            core.style.transform = "scale(1.5)";
+            core.style.opacity = 0; // Core fades out
+            
             setTimeout(() => {
-                instruction.innerText = "點擊左上角重置";
-                instruction.style.opacity = 0.5;
-            }, 2000);
+                answerEl.innerText = answers[Math.floor(Math.random() * answers.length)];
+                answerEl.classList.add('show');
+            }, 200);
+
+            setTimeout(() => {
+                instruction.innerText = "點擊左上角重置儀式";
+                instruction.classList.remove('fade');
+            }, 2500);
         }
 
-        // 綁定事件
         core.addEventListener('mousedown', startHold);
         core.addEventListener('touchstart', startHold, {passive: false});
         window.addEventListener('mouseup', endHold);
         window.addEventListener('touchend', endHold);
-
     </script>
 </body>
 </html>
