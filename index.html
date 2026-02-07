@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>虛空神諭 | Celestial Oracle</title>
+    <title>虛空神諭 | Prismatic Oracle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Noto+Serif+TC:wght@200;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500;700&family=Noto+Serif+TC:wght@300;500;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #020205;
-            --primary-gold: #ffd700;
-            --accent-glow: rgba(255, 215, 0, 0.6);
+            /* 基礎色調 */
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.6);
+            
+            /* 金色漸層定義 */
+            --gold-gradient: linear-gradient(135deg, #ffd700 0%, #fdb931 50%, #9f7928 100%);
+            --void-gradient: linear-gradient(-45deg, #050505, #1a103c, #0f2027, #000000);
         }
 
         * {
@@ -25,7 +27,6 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: 'Cormorant Garamond', 'Noto Serif TC', serif;
             overflow: hidden;
@@ -35,6 +36,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            
+            /* 動態流體背景 */
+            background: var(--void-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         #vfx-canvas {
@@ -43,15 +55,7 @@
             width: 100%; height: 100%;
             z-index: 0;
             pointer-events: none;
-        }
-
-        body::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, transparent 0%, var(--bg-color) 80%);
-            z-index: 1;
-            pointer-events: none;
+            opacity: 0.6; /* 讓背景漸層透出來 */
         }
 
         /* === UI 控制列 === */
@@ -77,30 +81,32 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
         }
 
-        .ctrl-btn span { font-size: 1.2rem; }
-
         .ctrl-btn:hover {
-            color: var(--primary-gold);
-            text-shadow: 0 0 10px var(--accent-glow);
-            background: rgba(255, 215, 0, 0.05);
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
         }
 
         /* 重置按鈕高亮動畫 */
         .ctrl-btn.highlight {
-            color: var(--primary-gold);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            background: rgba(255, 215, 0, 0.05);
+            border-color: #ffd700;
+            color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
             animation: pulse-border 2s infinite;
         }
 
         @keyframes pulse-border {
-            0% { box-shadow: 0 0 5px rgba(255,215,0,0.1); }
-            50% { box-shadow: 0 0 15px rgba(255,215,0,0.4); }
-            100% { box-shadow: 0 0 5px rgba(255,215,0,0.1); }
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(255,215,0,0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.2); }
         }
 
         /* === 核心互動區 === */
@@ -115,8 +121,8 @@
 
         .core-wrapper {
             position: relative;
-            width: 220px;
-            height: 220px;
+            width: 240px;
+            height: 240px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -131,27 +137,30 @@
             align-items: center;
             cursor: pointer;
             transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.1), inset 0 0 20px rgba(255, 215, 0, 0.05);
-            border: 1px solid rgba(255, 215, 0, 0.15);
-            background: rgba(0,0,0,0.2);
-            backdrop-filter: blur(2px);
+            
+            /* 核心樣式升級 */
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%);
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(3px);
         }
 
-        /* 鎖定狀態：視覺上變暗，游標變回預設 */
         .oracle-core.locked {
             cursor: default;
-            opacity: 0 !important; /* 強制隱藏核心 */
+            opacity: 0 !important; 
             pointer-events: none;
         }
 
         .oracle-core.charging {
             transform: scale(0.92);
-            box-shadow: 0 0 60px var(--accent-glow), inset 0 0 40px var(--accent-glow);
-            border-color: rgba(255, 215, 0, 0.5);
+            /* 蓄力時變成紫色光暈 */
+            box-shadow: 0 0 80px rgba(180, 100, 255, 0.4), inset 0 0 40px rgba(180, 100, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            background: radial-gradient(circle, rgba(180, 100, 255, 0.1) 0%, rgba(0,0,0,0) 80%);
         }
         
         .oracle-core.vibrating {
-            animation: vibrate 0.1s infinite linear;
+            animation: vibrate 0.08s infinite linear;
         }
         @keyframes vibrate {
             0% { transform: scale(0.92) translate(0, 0); }
@@ -169,51 +178,57 @@
         }
         .progress-ring-circle {
             transition: stroke-dashoffset 0.1s linear;
-            stroke: var(--primary-gold);
+            stroke: url(#goldGradientSVG); /* 使用 SVG 漸層 */
             stroke-width: 3;
             fill: transparent;
-            filter: drop-shadow(0 0 5px var(--primary-gold));
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
         }
         
         .symbol {
             font-size: 3rem;
-            opacity: 0.3;
+            opacity: 0.4;
             transition: all 0.5s;
-            color: var(--primary-gold);
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .oracle-core:hover .symbol { opacity: 0.6; }
+        .oracle-core:hover .symbol { opacity: 0.8; }
         .oracle-core.charging .symbol {
-            opacity: 1; color: #fff;
-            text-shadow: 0 0 20px var(--primary-gold);
+            opacity: 1; 
             transform: scale(1.1);
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
         }
 
         .answer-text {
             position: absolute;
             z-index: 20;
             font-family: 'Noto Serif TC', serif;
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: var(--primary-gold);
+            font-size: 3.2rem;
+            font-weight: 900;
             text-align: center;
-            width: 300px;
+            width: 350px;
             pointer-events: none;
             opacity: 0;
             transform: scale(0.8);
-            filter: blur(10px);
-            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-            text-shadow: 0 0 30px var(--accent-glow), 0 0 10px var(--primary-gold);
-            mix-blend-mode: screen;
+            filter: blur(15px);
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            
+            /* 文字金屬漸層 */
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* 讓文字有立體感的光暈 */
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
         }
         .answer-text.show {
             opacity: 1;
             transform: scale(1);
-            filter: blur(0);
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
         }
 
         .instruction-wrap {
             height: 60px;
-            margin-top: 60px;
+            margin-top: 70px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -227,14 +242,14 @@
             font-weight: 500;
             opacity: 0.8;
             transition: all 0.5s;
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
         .instruction.fade { opacity: 0; transform: translateY(10px); }
 
+        /* Modal */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 2, 5, 0.95);
+            background: rgba(5, 5, 10, 0.95);
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -248,15 +263,16 @@
             font-size: 3rem;
             font-weight: 300;
             letter-spacing: 8px;
-            color: var(--primary-gold);
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
             text-transform: uppercase;
-            text-shadow: 0 0 20px var(--accent-glow);
         }
         .start-btn {
             background: transparent;
-            border: 1px solid var(--primary-gold);
-            color: var(--primary-gold);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
             padding: 15px 50px;
             font-size: 1.2rem;
             font-family: 'Noto Serif TC', serif;
@@ -266,18 +282,13 @@
             margin-top: 40px;
             position: relative;
             overflow: hidden;
-        }
-        .start-btn::before {
-            content: ""; position: absolute;
-            top:0; left:-100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent);
-            transition: 0.5s;
+            border-radius: 50px;
         }
         .start-btn:hover {
-            background: rgba(255, 215, 0, 0.1);
-            box-shadow: 0 0 30px var(--accent-glow);
+            border-color: #ffd700;
+            color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
         }
-        .start-btn:hover::before { left: 100%; }
 
     </style>
 </head>
@@ -295,8 +306,8 @@
     </div>
 
     <div class="modal" id="modal">
-        <h1>Celestial Oracle</h1>
-        <p style="color: var(--text-secondary); letter-spacing: 2px; font-family:'Noto Serif TC';">請開啟聲音以獲得完整體驗</p>
+        <h1>Prismatic Oracle</h1>
+        <p style="color: var(--text-secondary); letter-spacing: 2px; font-family:'Noto Serif TC';">開啟聲音・感受共鳴</p>
         <button class="start-btn" onclick="initExperience()">開始連結</button>
     </div>
 
@@ -304,11 +315,18 @@
         <div class="core-wrapper">
             <div class="answer-text" id="answer"></div>
             <div class="oracle-core" id="core">
-                <svg class="progress-svg" viewBox="0 0 220 220">
+                <svg class="progress-svg" viewBox="0 0 240 240">
+                    <defs>
+                        <linearGradient id="goldGradientSVG" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fdb931" />
+                            <stop offset="50%" stop-color="#ffd700" />
+                            <stop offset="100%" stop-color="#9f7928" />
+                        </linearGradient>
+                    </defs>
                     <circle class="progress-ring-circle" 
-                            cx="110" cy="110" r="105" 
-                            stroke-dasharray="660" 
-                            stroke-dashoffset="660" />
+                            cx="120" cy="120" r="115" 
+                            stroke-dasharray="722" 
+                            stroke-dashoffset="722" />
                 </svg>
                 <div class="symbol" id="core-symbol">✦</div>
             </div>
@@ -322,7 +340,6 @@
     <script>
         const answers = ["時機已到", "絕非偶然", "相信直覺", "保持靜默", "大膽前行", "放下執念", "結果驚人", "等待信號", "回歸初心", "尋求盟友", "答案在風中", "稍安勿躁", "謹慎行事", "光在前方", "混沌未明", "這值得冒險", "重新思考", "你是對的", "命運已定", "無需多言"];
 
-        // === DOM Elements ===
         const core = document.getElementById('core');
         const coreSymbol = document.getElementById('core-symbol');
         const ring = document.querySelector('.progress-ring-circle');
@@ -332,12 +349,11 @@
         const muteBtn = document.getElementById('mute-btn');
         const resetBtn = document.getElementById('reset-btn');
 
-        // === State ===
         let charge = 0;
         let isHolding = false;
         let isRevealed = false;
         let animFrame;
-        const totalLength = 660; // 2 * PI * 105
+        const totalLength = 722; // 2 * PI * 115
 
         // ==========================================
         // === VFX Engine (Canvas Particle System) ===
@@ -345,7 +361,6 @@
         const canvas = document.getElementById('vfx-canvas');
         const ctx = canvas.getContext('2d');
         let w, h, cx, cy;
-        let particles = [];
         let vfxState = 'idle'; 
 
         function resize() {
@@ -365,38 +380,38 @@
                 if (this.type === 'ambient') {
                     this.x = Math.random() * w;
                     this.y = Math.random() * h;
-                    this.vx = (Math.random() - 0.5) * 0.2;
-                    this.vy = (Math.random() - 0.5) * 0.2;
-                    this.size = Math.random() * 1.5 + 0.5;
+                    this.vx = (Math.random() - 0.5) * 0.3;
+                    this.vy = (Math.random() - 0.5) * 0.3;
+                    this.size = Math.random() * 2;
                     this.life = Math.random();
-                    this.color = 'rgba(255, 215, 0, ';
+                    // 隨機顏色：金色或淡紫色
+                    this.isGold = Math.random() > 0.5;
                 } else if (this.type === 'charge') {
                     const angle = Math.random() * Math.PI * 2;
-                    const dist = 150 + Math.random() * 200;
+                    const dist = 180 + Math.random() * 200;
                     this.x = cx + Math.cos(angle) * dist;
                     this.y = cy + Math.sin(angle) * dist;
                     this.size = Math.random() * 2 + 1;
-                    this.speed = 2 + Math.random() * 3;
-                    this.color = 'rgba(255, 230, 100, ';
+                    this.speed = 3 + Math.random() * 4;
                     this.active = true;
                 } else if (this.type === 'burst') {
                     this.x = cx; this.y = cy;
                     const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 15 + 5;
+                    const speed = Math.random() * 12 + 5;
                     this.vx = Math.cos(angle) * speed;
                     this.vy = Math.sin(angle) * speed;
-                    this.size = Math.random() * 3 + 2;
+                    this.size = Math.random() * 4 + 1;
                     this.life = 1;
-                    this.decay = Math.random() * 0.02 + 0.015;
-                    this.color = 'rgba(255, 255, 200, ';
+                    this.decay = Math.random() * 0.02 + 0.01;
                     this.active = true;
+                    this.isGold = Math.random() > 0.3; // 70% 金色，30% 紫色
                 }
             }
             update() {
                 if (this.type === 'ambient') {
                     this.x += this.vx; this.y += this.vy;
-                    this.life += 0.01;
-                    this.alpha = (Math.sin(this.life) + 1) / 2 * 0.5;
+                    this.life += 0.005;
+                    this.alpha = (Math.sin(this.life * 2) + 1) / 2 * 0.4;
                     if(this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
                 } else if (this.type === 'charge' && this.active) {
                     const dx = cx - this.x; const dy = cy - this.y;
@@ -406,12 +421,12 @@
                         const angle = Math.atan2(dy, dx);
                         this.x += Math.cos(angle) * this.speed;
                         this.y += Math.sin(angle) * this.speed;
-                        this.speed += 0.2; 
-                        this.alpha = 1 - (dist / 300);
+                        this.speed += 0.3; 
+                        this.alpha = 1 - (dist / 350);
                     }
                 } else if (this.type === 'burst' && this.active) {
                     this.x += this.vx; this.y += this.vy;
-                    this.vx *= 0.96; this.vy *= 0.96;
+                    this.vx *= 0.95; this.vy *= 0.95;
                     this.life -= this.decay;
                     this.alpha = this.life;
                     if (this.life <= 0) this.active = false;
@@ -421,14 +436,26 @@
                 if (this.type !== 'ambient' && !this.active) return;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color + this.alpha + ')';
+                
+                // 動態配色
+                if (this.type === 'ambient') {
+                    ctx.fillStyle = this.isGold ? 
+                        `rgba(255, 215, 0, ${this.alpha})` : 
+                        `rgba(180, 100, 255, ${this.alpha})`;
+                } else if (this.type === 'charge') {
+                    ctx.fillStyle = `rgba(180, 100, 255, ${this.alpha})`;
+                } else {
+                    ctx.fillStyle = this.isGold ? 
+                        `rgba(255, 230, 100, ${this.alpha})` : 
+                        `rgba(200, 150, 255, ${this.alpha})`;
+                }
                 ctx.fill();
             }
         }
 
-        const ambientParticles = Array.from({length: 80}, () => new Particle('ambient'));
-        const chargeParticles = Array.from({length: 100}, () => new Particle('charge'));
-        const burstParticles = Array.from({length: 150}, () => new Particle('burst'));
+        const ambientParticles = Array.from({length: 100}, () => new Particle('ambient'));
+        const chargeParticles = Array.from({length: 120}, () => new Particle('charge'));
+        const burstParticles = Array.from({length: 200}, () => new Particle('burst'));
 
         function animateVFX() {
             ctx.clearRect(0, 0, w, h);
@@ -446,10 +473,10 @@
         animateVFX();
 
         // ==========================================
-        // === Audio Engine ===
+        // === Audio Engine (Varied & Procedural) ===
         // ==========================================
         const Audio = {
-            ctx: null, masterGain: null, drone: null, chargeOsc: null, isMuted: false,
+            ctx: null, masterGain: null, isMuted: false, chargeOsc: null,
             init() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.masterGain = this.ctx.createGain();
@@ -463,42 +490,84 @@
                 return this.isMuted;
             },
             startDrone() {
-                const osc1 = this.ctx.createOscillator(), osc2 = this.ctx.createOscillator();
+                // 背景音使用兩個低頻振盪器產生拍頻，頻率每次隨機微調
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                osc1.frequency.value = 60; osc2.frequency.value = 62; 
+                
+                const baseFreq = 55 + Math.random() * 5; // 隨機基頻
+                osc1.frequency.value = baseFreq; 
+                osc2.frequency.value = baseFreq + 1.5; // 輕微走音產生 "Beating"
+                
                 gain.gain.value = 0.08;
                 osc1.connect(gain); osc2.connect(gain); gain.connect(this.masterGain);
-                osc1.start(); osc2.start(); this.drone = {osc1, osc2, gain};
+                osc1.start(); osc2.start();
             },
             startCharge() {
                 if(this.isMuted) return;
                 this.chargeOsc = this.ctx.createOscillator();
                 this.chargeGain = this.ctx.createGain();
-                this.chargeOsc.type = 'sawtooth'; this.chargeOsc.frequency.value = 80;
+                
+                this.chargeOsc.type = 'sawtooth'; 
+                // 每次蓄力的起始音高略有不同
+                this.chargeOsc.frequency.value = 70 + Math.random() * 20;
+                
                 this.chargeGain.gain.setValueAtTime(0, this.ctx.currentTime);
-                this.chargeGain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime+2);
-                this.chargeOsc.connect(this.chargeGain); this.chargeGain.connect(this.masterGain);
+                this.chargeGain.gain.linearRampToValueAtTime(0.08, this.ctx.currentTime+2);
+                
+                // 加入濾波器讓聲音更有質感
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = "lowpass";
+                filter.frequency.value = 300;
+                
+                this.chargeOsc.connect(filter);
+                filter.connect(this.chargeGain);
+                this.chargeGain.connect(this.masterGain);
                 this.chargeOsc.start();
             },
             updateCharge(progress) {
-                if(this.chargeOsc && !this.isMuted) this.chargeOsc.frequency.setTargetAtTime(80 + progress*3, this.ctx.currentTime, 0.1);
+                if(this.chargeOsc && !this.isMuted) {
+                    // 頻率上升
+                    this.chargeOsc.frequency.setTargetAtTime(80 + progress*3.5, this.ctx.currentTime, 0.1);
+                    // 隨機抖動 (Vibrato)
+                    this.chargeOsc.detune.setValueAtTime(Math.random()*20 - 10, this.ctx.currentTime);
+                }
             },
             stopCharge() {
                 if(this.chargeOsc) {
                     this.chargeGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime+0.2);
-                    this.chargeOsc.stop(this.ctx.currentTime+0.2); this.chargeOsc = null;
+                    this.chargeOsc.stop(this.ctx.currentTime+0.2); 
+                    this.chargeOsc = null;
                 }
             },
             playReveal() {
                 if(this.isMuted) return;
-                [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => { 
-                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                    osc.type = i===0?'triangle':'sine'; osc.frequency.value = f;
-                    gain.gain.setValueAtTime(0, this.ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.15/(i+1), this.ctx.currentTime+0.02);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+4);
-                    osc.connect(gain); gain.connect(this.masterGain);
-                    osc.start(); osc.stop(this.ctx.currentTime+4.5);
+                // C Major 7 基礎頻率，但加入隨機變數
+                const baseNotes = [523.25, 659.25, 783.99, 1046.5];
+                
+                baseNotes.forEach((f,i) => { 
+                    const osc = this.ctx.createOscillator(); 
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = i===0 ? 'triangle' : 'sine';
+                    
+                    // 【關鍵升級】每次隨機微調音準 (Detune)，創造 "Chorus" 效果
+                    const randomDetune = (Math.random() - 0.5) * 25; // +/- 12.5 cents
+                    osc.frequency.value = f;
+                    osc.detune.value = randomDetune;
+
+                    // 隨機延遲撥弦 (Strumming effect)
+                    const delay = Math.random() * 0.05;
+                    const startTime = this.ctx.currentTime + delay;
+
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.15/(i+1), startTime + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 4);
+                    
+                    osc.connect(gain); 
+                    gain.connect(this.masterGain);
+                    osc.start(startTime); 
+                    osc.stop(startTime + 4.5);
                 });
             }
         };
@@ -508,7 +577,6 @@
             modal.classList.add('hidden');
             setTimeout(() => modal.style.display = 'none', 800);
             Audio.init();
-            // 啟用監聽器
             enableInteractions();
         }
 
@@ -517,7 +585,6 @@
             muteBtn.querySelector('span').innerText = muted ? '🔇' : '🔊';
         }
 
-        // 監聽器管理 (關鍵修復點)
         function enableInteractions() {
             core.addEventListener('mousedown', startHold);
             core.addEventListener('touchstart', startHold, {passive: false});
@@ -528,8 +595,6 @@
         function disableInteractions() {
             core.removeEventListener('mousedown', startHold);
             core.removeEventListener('touchstart', startHold);
-            // 讓 window 的監聽器繼續運作也無妨，因為 endHold 內有 guard，但最好還是移除以防萬一
-            // 這裡我們保留 window 監聽器，但在 endHold 裡做嚴格檢查
         }
 
         function resetApp() {
@@ -538,10 +603,9 @@
             
             answerEl.classList.remove('show');
             core.style.opacity = 1; 
-            coreSymbol.style.opacity = 0.3;
+            coreSymbol.style.opacity = 0.4;
             core.style.transform = "scale(1)";
             
-            // 解除鎖定樣式
             core.classList.remove('locked');
             resetBtn.classList.remove('highlight');
             
@@ -549,7 +613,6 @@
             instruction.innerText = "長按核心注入能量";
             core.classList.remove('charging', 'vibrating');
 
-            // 重新綁定事件
             enableInteractions();
         }
 
@@ -566,9 +629,7 @@
         }
 
         function endHold(e) {
-            // [關鍵修復]：如果根本沒在按住狀態，直接忽略。
-            // 這防止了「點擊螢幕任意處」導致觸發舊的 charge 值
-            if (!isHolding) return;
+            if (!isHolding) return; // 幽靈修正
 
             isHolding = false;
             core.classList.remove('charging', 'vibrating');
@@ -581,11 +642,9 @@
                 instruction.classList.remove('fade');
                 const rollback = setInterval(() => {
                     charge -= 6; 
-                    if (charge < 0) charge = 0; // 防止負數
+                    if (charge < 0) charge = 0; 
                     updateRing(charge);
-                    if (charge <= 0) { 
-                        clearInterval(rollback); 
-                    }
+                    if (charge <= 0) clearInterval(rollback); 
                 }, 10);
             }
         }
@@ -597,9 +656,8 @@
             Audio.updateCharge(charge);
             if (charge > 50) core.classList.add('vibrating');
             
-            // 達到 100 自動觸發，不需要等放開
             if (charge >= 100) {
-                isHolding = false; // 強制停止
+                isHolding = false; 
                 Audio.stopCharge();
                 reveal();
             } else {
@@ -613,11 +671,9 @@
 
         function reveal() {
             isRevealed = true;
-            // [關鍵修復]：揭曉瞬間，立刻歸零能量，防止幽靈觸發
             charge = 0; 
             updateRing(0);
 
-            // 移除核心互動
             disableInteractions();
             core.classList.add('locked');
             resetBtn.classList.add('highlight');
@@ -626,7 +682,6 @@
             burstParticles.forEach(p => p.reset());
             Audio.playReveal();
             
-            // 核心視覺消失
             core.style.opacity = 0; 
             core.style.transform = "scale(1.5)";
             
@@ -640,9 +695,6 @@
                 instruction.classList.remove('fade');
             }, 2500);
         }
-
-        // 初始化只綁定 resize，互動事件由 initExperience 觸發
-        // 這樣可以防止 modal 未關閉前就誤觸
     </script>
 </body>
 </html>
