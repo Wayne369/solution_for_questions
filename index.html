@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宇宙解答之書</title>
+    <style>
+        :root {
+            --bg-color: #0b0d17;
+            --text-color: #ffffff;
+            --accent-color: #a29bfe;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .content {
+            z-index: 10;
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+            background: rgba(11, 13, 23, 0.6);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .content:hover {
+            transform: scale(1.02);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        #answer {
+            font-size: 3rem;
+            font-weight: 700;
+            min-height: 1.2em;
+            background: -webkit-linear-gradient(45deg, #a29bfe, #74b9ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(162, 155, 254, 0.3);
+            margin: 20px 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        #answer.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        p.instruction {
+            font-size: 0.9rem;
+            color: #b2bec3;
+            margin-top: 40px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <canvas id="stars"></canvas>
+    </div>
+
+    <div class="content" id="click-area">
+        <h1>THE BOOK OF ANSWERS</h1>
+        <div id="answer"></div>
+        <p class="instruction">在心中默念你的問題，然後點擊螢幕</p>
+    </div>
+
+    <script>
+        // 解答資料庫
+        const answers = [
+            "絕對是。", "現在不是時候。", "相信你的直覺。", "別指望它。",
+            "結果會讓你驚喜。", "專注於當下。", "放手一搏。", "再多思考一下。",
+            "這是不確定的。", "毫無疑問。", "你需要耐心。", "看起來不錯。",
+            "先問問朋友。", "這值得冒險。", "重新考慮你的選擇。", "答案在你自己心中。",
+            "你需要休息一下。", "別被恐懼阻礙。", "這是命運的安排。", "保持樂觀。"
+        ];
+
+        const answerEl = document.getElementById('answer');
+        const instructionEl = document.querySelector('.instruction');
+        let isAnimating = false;
+
+        // 點擊互動邏輯
+        document.body.addEventListener('click', function() {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // 隱藏舊答案
+            answerEl.classList.remove('show');
+            instructionEl.style.opacity = '0';
+            
+            // 模擬思考延遲
+            setTimeout(() => {
+                const randomAnswer = answers[Math.floor(Math.random() * answers.length)];
+                answerEl.innerText = randomAnswer;
+                answerEl.classList.add('show');
+                
+                // 重置狀態
+                setTimeout(() => {
+                    isAnimating = false;
+                    instructionEl.innerText = "點擊螢幕再次提問";
+                    instructionEl.style.opacity = ''; 
+                    instructionEl.style.animation = 'pulse 2s infinite';
+                }, 500);
+            }, 300);
+        });
+
+        // 星空背景動畫 (Canvas)
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            resize();
+            initParticles();
+        });
+
+        resize();
+        initParticles();
+        animate();
+    </script>
+</body>
+</html>
