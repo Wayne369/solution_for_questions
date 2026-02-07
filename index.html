@@ -7,10 +7,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #000000;
-            --primary-glow: #a29bfe;
-            --secondary-glow: #6c5ce7;
+            --bg-color: #050505;
+            --primary-glow: #a29bfe; /* 紫色光芒 */
+            --secondary-glow: #74b9ff; /* 藍色輔助 */
+            --error-color: #ff7675;
             --text-color: #dfe6e9;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent; /* 移除手機點擊藍框 */
         }
 
         body {
@@ -21,41 +27,34 @@
             font-family: 'Cinzel', 'Noto Serif TC', serif;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            user-select: none; /* 禁止選取文字 */
+            touch-action: none; /* 禁止手機預設觸控行為 */
         }
 
-        /* 背景微動的星雲感 */
+        /* 背景星雲 */
         body::before {
             content: "";
             position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(20,20,50,0.4) 0%, transparent 60%);
-            animation: nebula-move 20s infinite alternate;
-            z-index: 0;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 70%);
+            z-index: -2;
         }
 
-        @keyframes nebula-move {
-            0% { transform: translate(-10%, -10%); }
-            100% { transform: translate(10%, 10%); }
-        }
-
-        #canvas-layer {
+        /* 雜訊紋理 */
+        .noise-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none; /* 讓點擊穿透到下層 */
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
         }
 
-        .oracle-container {
+        /* === 核心互動區 === */
+        .container {
             position: relative;
             z-index: 10;
             display: flex;
@@ -64,349 +63,395 @@
             justify-content: center;
             width: 100%;
             height: 100%;
-            cursor: pointer;
         }
 
-        /* 中心法陣/按鈕 */
-        .void-circle {
-            width: 150px;
-            height: 150px;
+        /* 法陣 (按鈕) */
+        .oracle-circle {
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 20px rgba(108, 92, 231, 0.2);
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(2px);
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 20px rgba(162, 155, 254, 0.1);
         }
 
-        /* 內圈光環 */
-        .void-circle::after {
+        /* 呼吸燈效果 */
+        .oracle-circle::before {
             content: "";
             position: absolute;
-            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            top: -10px; left: -10px; right: -10px; bottom: -10px;
             border-radius: 50%;
-            border: 1px dashed rgba(162, 155, 254, 0.4);
-            animation: spin 10s linear infinite;
+            border: 1px dashed rgba(162, 155, 254, 0.3);
+            animation: rotate-slow 20s linear infinite;
         }
 
-        .void-circle.charging {
-            transform: scale(0.95);
+        .oracle-circle.charging {
             border-color: var(--primary-glow);
-            box-shadow: 0 0 50px var(--secondary-glow), inset 0 0 30px var(--secondary-glow);
+            box-shadow: 0 0 50px var(--primary-glow), inset 0 0 30px var(--primary-glow);
         }
 
-        .void-circle.charging::after {
-            border-style: solid;
-            border-color: #fff;
-            animation: spin 1s linear infinite; /* 加速旋轉 */
-        }
-
-        @keyframes spin {
+        @keyframes rotate-slow {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        .prompt-text {
-            margin-top: 40px;
-            font-size: 0.9rem;
-            letter-spacing: 3px;
-            opacity: 0.6;
-            text-transform: uppercase;
-            transition: opacity 0.3s;
-        }
-
-        .answer-display {
-            position: absolute;
-            top: 20%;
-            width: 80%;
-            text-align: center;
+        /* 能量圖標 */
+        .icon {
             font-size: 2.5rem;
-            font-weight: 700;
-            text-shadow: 0 0 20px var(--primary-glow);
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.5s;
-            pointer-events: none;
-            mix-blend-mode: screen;
+            color: rgba(255,255,255,0.7);
+            transition: all 0.3s;
+        }
+        
+        .oracle-circle.charging .icon {
+            transform: scale(0.8);
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
         }
 
-        .answer-display.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* 進度條指示 */
-        .progress-ring {
+        /* 進度條 SVG */
+        .progress-svg {
             position: absolute;
-            width: 160px;
-            height: 160px;
+            top: -5px; left: -5px;
+            width: 170px; height: 170px;
             transform: rotate(-90deg);
             pointer-events: none;
         }
-        
-        .progress-ring circle {
+
+        .progress-ring {
             fill: transparent;
             stroke: var(--primary-glow);
             stroke-width: 4;
-            stroke-dasharray: 472; /* 2 * PI * r (r=75) ≈ 471.2 */
-            stroke-dashoffset: 472;
-            transition: stroke-dashoffset 0.1s linear;
+            stroke-dasharray: 502; /* 2 * PI * 80 */
+            stroke-dashoffset: 502;
+            stroke-linecap: round;
+        }
+
+        /* === 提示文字 === */
+        .hint-text {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            transition: opacity 0.3s;
+        }
+        
+        .hint-text.warn {
+            color: var(--error-color);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* === 答案顯示區 === */
+        .answer-area {
+            position: absolute;
+            top: 20%;
+            width: 90%;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .answer-text {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(to bottom, #fff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            filter: blur(10px);
+            transform: scale(0.9);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            text-shadow: 0 0 30px rgba(162, 155, 254, 0.5);
+        }
+
+        .answer-text.visible {
+            opacity: 1;
+            filter: blur(0);
+            transform: scale(1);
+        }
+
+        /* === 使用說明 Modal (覆蓋層) === */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 30, 0.9);
+            border: 1px solid rgba(162, 155, 254, 0.3);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            transform: translateY(0);
+            transition: transform 0.5s;
+        }
+
+        .modal-overlay.hidden .modal-content {
+            transform: translateY(-20px);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-glow);
+            letter-spacing: 3px;
+        }
+
+        .modal-steps {
+            text-align: left;
+            margin-bottom: 30px;
+            color: #b2bec3;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .modal-steps li {
+            margin-bottom: 10px;
+            list-style: none; /* 移除預設點點 */
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .modal-steps li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--primary-glow);
+            font-size: 0.8rem;
+            top: 4px;
+        }
+
+        .start-btn {
+            background: transparent;
+            border: 1px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 10px 30px;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .start-btn:hover {
+            background: var(--primary-glow);
+            color: #000;
+            box-shadow: 0 0 20px var(--primary-glow);
         }
 
     </style>
 </head>
 <body>
 
-    <canvas id="canvas-layer"></canvas>
+    <div class="noise-overlay"></div>
 
-    <div class="oracle-container" id="touch-zone">
-        <div class="answer-display" id="answer-text"></div>
+    <div class="modal-overlay" id="intro-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">THE VOID ORACLE</h2>
+            <ul class="modal-steps">
+                <li>閉上雙眼，在心中默念你的問題。</li>
+                <li>這不是按鈕，而是連結通道。</li>
+                <li><strong>長按</strong>螢幕中央的法陣注入能量。</li>
+                <li>當能量圓環填滿時，放手獲取解答。</li>
+            </ul>
+            <button class="start-btn" onclick="closeModal()">我準備好了</button>
+        </div>
+    </div>
 
-        <div class="void-circle" id="core">
-            <svg class="progress-ring">
-                <circle cx="80" cy="80" r="75"></circle>
-            </svg>
-            <span style="font-size: 2rem; opacity: 0.8;">✦</span>
+    <div class="container">
+        <div class="answer-area">
+            <div class="answer-text" id="answer"></div>
         </div>
 
-        <p class="prompt-text" id="prompt">長按注入能量</p>
+        <div class="oracle-circle" id="circle">
+            <svg class="progress-svg">
+                <circle class="progress-ring" cx="85" cy="85" r="80"></circle>
+            </svg>
+            <div class="icon">✦</div>
+        </div>
+
+        <p class="hint-text" id="hint">長按法陣注入能量</p>
     </div>
 
     <script>
-        // === 邏輯設定 ===
+        // === 資料庫 ===
         const answers = [
-            "時機已到", "絕非偶然", "保持靜默", "放下執念",
-            "順其自然", "這是考驗", "相信直覺", "稍安勿躁",
-            "大膽前行", "回歸初心", "尋求盟友", "答案在風中",
-            "並非現在", "結果驚人", "你需要休息", "別回頭看",
-            "光在前方", "混沌未明", "這是命運", "重新思考"
+            "毫無疑問", "時機未到", "專注於當下", "這是不確定的",
+            "相信你的直覺", "重新考慮", "結果將令你驚喜", "別回頭看",
+            "放手一搏", "你需要耐心", "尋求他人幫助", "答案在你心中",
+            "絕對是", "看起來不錯", "謹慎行事", "這值得冒險",
+            "這是一場試煉", "順其自然", "混亂後的平靜", "光在前方"
         ];
 
         // === DOM 元素 ===
-        const touchZone = document.getElementById('touch-zone');
-        const core = document.getElementById('core');
-        const prompt = document.getElementById('prompt');
-        const answerText = document.getElementById('answer-text');
-        const progressCircle = document.querySelector('.progress-ring circle');
-        const canvas = document.getElementById('canvas-layer');
-        const ctx = canvas.getContext('2d');
+        const circle = document.getElementById('circle');
+        const ring = document.querySelector('.progress-ring');
+        const hint = document.getElementById('hint');
+        const answerEl = document.getElementById('answer');
+        const modal = document.getElementById('intro-modal');
 
-        // === 狀態變數 ===
+        // === 變數 ===
+        let charge = 0;
         let isHolding = false;
-        let chargeLevel = 0; // 0 到 100
-        const chargeSpeed = 1.5; // 蓄力速度
-        let animationFrameId;
-        let particles = [];
-        let width, height;
+        let animationId;
+        const totalLength = 502; // 圓周長
+        let isCooldown = false; // 冷卻時間防止連點
 
-        // === 粒子系統 (背景 + 匯聚效果) ===
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
+        // === 關閉說明視窗 ===
+        function closeModal() {
+            modal.classList.add('hidden');
+            // 為了無障礙體驗，隱藏後稍後移除 display
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
         }
-        window.addEventListener('resize', resize);
-        resize();
-
-        class Particle {
-            constructor(type = 'ambient') {
-                this.type = type; // 'ambient' (背景) 或 'suck' (吸入)
-                this.reset();
-            }
-
-            reset() {
-                if (this.type === 'ambient') {
-                    this.x = Math.random() * width;
-                    this.y = Math.random() * height;
-                    this.vx = (Math.random() - 0.5) * 0.5;
-                    this.vy = (Math.random() - 0.5) * 0.5;
-                    this.size = Math.random() * 2;
-                    this.alpha = Math.random() * 0.5;
-                } else {
-                    // 吸入粒子：從四周生成
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = Math.max(width, height) / 2;
-                    this.x = width/2 + Math.cos(angle) * dist;
-                    this.y = height/2 + Math.sin(angle) * dist;
-                    this.vx = 0;
-                    this.vy = 0;
-                    this.size = Math.random() * 3 + 1;
-                    this.alpha = 1;
-                    this.speed = Math.random() * 15 + 10;
-                }
-            }
-
-            update() {
-                if (this.type === 'ambient') {
-                    this.x += this.vx;
-                    this.y += this.vy;
-                    if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) this.reset();
-                } else if (this.type === 'suck') {
-                    // 向中心移動
-                    const dx = width/2 - this.x;
-                    const dy = height/2 - this.y;
-                    const distance = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if (distance < 50) { // 到達中心
-                        this.reset();
-                    } else {
-                        const angle = Math.atan2(dy, dx);
-                        this.x += Math.cos(angle) * this.speed;
-                        this.y += Math.sin(angle) * this.speed;
-                    }
-                }
-            }
-
-            draw() {
-                ctx.fillStyle = `rgba(162, 155, 254, ${this.alpha})`;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // 初始化背景粒子
-        for(let i=0; i<50; i++) particles.push(new Particle('ambient'));
-        // 預備吸入粒子池
-        const suckParticles = [];
-        for(let i=0; i<30; i++) suckParticles.push(new Particle('suck'));
-
-        function animateCanvas() {
-            ctx.clearRect(0, 0, width, height);
-            
-            // 繪製背景粒子
-            particles.forEach(p => { p.update(); p.draw(); });
-
-            // 如果正在蓄力，繪製吸入粒子
-            if (isHolding) {
-                suckParticles.forEach(p => { p.update(); p.draw(); });
-            }
-
-            requestAnimationFrame(animateCanvas);
-        }
-        animateCanvas();
 
         // === 互動邏輯 ===
-
         function startCharge(e) {
-            e.preventDefault(); // 防止手機反白文字
-            if (chargeLevel >= 100) return; // 已經顯示答案就不動作，需重置
+            if (e.cancelable) e.preventDefault(); // 防止手機選取/右鍵
+            if (isCooldown) return;
+
+            // 隱藏舊答案
+            answerEl.classList.remove('visible');
             
             isHolding = true;
-            core.classList.add('charging');
-            prompt.innerText = "集中精神...";
-            answerText.classList.remove('visible'); // 隱藏舊答案
-            
+            circle.classList.add('charging');
+            hint.innerText = "集中精神...";
+            hint.classList.remove('warn');
+            hint.style.opacity = 0.8;
+
             chargeLoop();
         }
 
-        function stopCharge() {
+        function endCharge() {
             isHolding = false;
-            core.classList.remove('charging');
-            
-            if (chargeLevel < 100) {
-                // 如果沒集滿就放開
-                chargeLevel = 0;
-                updateProgress(0);
-                prompt.innerText = "長按注入能量";
-                cancelAnimationFrame(animationFrameId);
+            circle.classList.remove('charging');
+
+            if (charge >= 100) {
+                // 成功觸發
+                revealAnswer();
+                charge = 0;
+                updateRing(0);
+            } else {
+                // 失敗 (太早放開)
+                if (charge > 10) { // 如果只按了一下下
+                   hint.innerText = "能量不足，請長按";
+                   hint.classList.add('warn');
+                } else {
+                   hint.innerText = "長按法陣注入能量";
+                }
+                
+                // 快速回退動畫
+                cancelAnimationFrame(animationId);
+                const rollBack = setInterval(() => {
+                    charge -= 5;
+                    if (charge <= 0) {
+                        charge = 0;
+                        clearInterval(rollBack);
+                    }
+                    updateRing(charge);
+                }, 10);
             }
         }
 
         function chargeLoop() {
             if (!isHolding) return;
 
-            chargeLevel += chargeSpeed;
-            updateProgress(chargeLevel);
-
-            if (chargeLevel >= 100) {
-                isHolding = false; // 停止蓄力
-                core.classList.remove('charging');
-                revealAnswer();
-            } else {
-                animationFrameId = requestAnimationFrame(chargeLoop);
-            }
-        }
-
-        function updateProgress(percent) {
-            const r = 75;
-            const circumference = 2 * Math.PI * r;
-            const offset = circumference - (percent / 100) * circumference;
-            progressCircle.style.strokeDashoffset = offset;
+            // 增加能量 (速度可調)
+            charge += 1.5; 
             
-            // 隨著進度增加震動效果
-            if (percent > 0) {
-                const shake = (percent / 100) * 5;
-                core.style.transform = `scale(0.95) translate(${Math.random()*shake - shake/2}px, ${Math.random()*shake - shake/2}px)`;
+            // 震動特效 (隨著能量增加，震動變大)
+            if (charge > 20) {
+                const shakeIntensity = (charge / 100) * 5;
+                const x = (Math.random() - 0.5) * shakeIntensity;
+                const y = (Math.random() - 0.5) * shakeIntensity;
+                circle.style.transform = `translate(${x}px, ${y}px)`;
+            }
+
+            updateRing(charge);
+
+            if (charge >= 100) {
+                endCharge(); // 集滿自動觸發
             } else {
-                core.style.transform = `scale(1)`;
+                animationId = requestAnimationFrame(chargeLoop);
             }
         }
 
-        // === 文字解碼特效 ===
+        function updateRing(percent) {
+            const offset = totalLength - (percent / 100) * totalLength;
+            ring.style.strokeDashoffset = offset;
+        }
+
+        // === 顯示答案 (含解碼特效) ===
         function revealAnswer() {
-            prompt.style.opacity = 0;
+            isCooldown = true; // 進入冷卻
+            hint.style.opacity = 0;
+            circle.style.transform = 'scale(0.9)'; // 釋放時縮一下
+
             const finalAnswer = answers[Math.floor(Math.random() * answers.length)];
-            answerText.innerText = "";
-            answerText.classList.add('visible');
+            const glitchChars = "!@#$%^&*()<>?{}[]ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             
-            let iterations = 0;
-            const maxIterations = 20; // 跳動次數
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+            answerEl.classList.add('visible');
             
+            let i = 0;
+            // 解碼動畫：前幾幀顯示亂碼
             const interval = setInterval(() => {
-                // 產生亂碼字串，長度與答案相同
-                answerText.innerText = finalAnswer.split('')
-                    .map((letter, index) => {
-                        if (index < iterations / 3) return finalAnswer[index]; // 逐步定格
-                        return chars[Math.floor(Math.random() * chars.length)];
-                    })
-                    .join('');
+                answerEl.innerText = finalAnswer.split('').map((char, index) => {
+                    if (index < i) return finalAnswer[index];
+                    return glitchChars[Math.floor(Math.random() * glitchChars.length)];
+                }).join('');
                 
-                if (iterations >= maxIterations) {
+                i += 1/3; // 解碼速度
+                
+                if (i >= finalAnswer.length) {
                     clearInterval(interval);
-                    answerText.innerText = finalAnswer; // 確保最後顯示正確
+                    answerEl.innerText = finalAnswer;
                     
-                    // 重置機制
+                    // 重置狀態
                     setTimeout(() => {
-                        prompt.innerText = "點擊法陣重置";
-                        prompt.style.opacity = 1;
-                        core.onclick = resetOracle;
-                        // 移除長按監聽，改為點擊重置
-                        removeListeners();
+                        isCooldown = false;
+                        hint.innerText = "再次長按提問";
+                        hint.style.opacity = 0.5;
+                        circle.style.transform = 'scale(1)';
                     }, 1000);
                 }
-                iterations++;
-            }, 50); // 每 50ms 變換一次
+            }, 30);
         }
 
-        function resetOracle() {
-            chargeLevel = 0;
-            updateProgress(0);
-            answerText.classList.remove('visible');
-            prompt.innerText = "長按注入能量";
-            core.onclick = null; // 移除點擊重置
-            addListeners(); // 加回長按監聽
-        }
+        // === 事件監聽 (支援滑鼠與觸控) ===
+        circle.addEventListener('mousedown', startCharge);
+        circle.addEventListener('touchstart', startCharge, {passive: false});
 
-        // === 事件監聽綁定 ===
-        function addListeners() {
-            touchZone.addEventListener('mousedown', startCharge);
-            touchZone.addEventListener('touchstart', startCharge);
-            
-            window.addEventListener('mouseup', stopCharge);
-            window.addEventListener('touchend', stopCharge);
-        }
-
-        function removeListeners() {
-            touchZone.removeEventListener('mousedown', startCharge);
-            touchZone.removeEventListener('touchstart', startCharge);
-        }
-
-        addListeners();
+        window.addEventListener('mouseup', endCharge);
+        window.addEventListener('touchend', endCharge);
 
     </script>
 </body>
