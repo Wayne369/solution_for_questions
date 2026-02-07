@@ -44,7 +44,9 @@
         #vfx-canvas {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 0; pointer-events: none; opacity: 0.5;
+            z-index: 0; pointer-events: none; 
+            /* 稍微提高不透明度，讓星星更清楚 */
+            opacity: 0.7;
         }
 
         .controls {
@@ -142,27 +144,20 @@
         }
         .oracle-core:hover .symbol { opacity: 1; transform: scale(1.1); }
 
-        /* === 修正重點：文字樣式 === */
         .answer-text {
             position: absolute; 
             z-index: 1; 
             top: 50%; left: 50%;
-            /* 使用 max-content 允許文字超過容器寬度 */
             width: max-content; 
-            /* 預防性 padding，避免漸層在最邊緣被切斷 */
             padding: 0 20px; 
-            
             transform: translate(-50%, -50%) scale(0.8);
-            
             font-family: 'Zen Maru Gothic', sans-serif;
             font-size: 3.5rem; font-weight: 700;
             text-align: center; 
             white-space: nowrap;
-            
             pointer-events: none; opacity: 0;
             filter: blur(20px);
             transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-            
             background: linear-gradient(to bottom, #fff 30%, #a18cd1 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             text-shadow: 0 0 50px rgba(161, 140, 209, 0.6);
@@ -279,7 +274,7 @@
         const CHARGE_SPEED = 1.0; 
 
         // ==========================================
-        // === VFX Engine ===
+        // === VFX Engine (Updated with Stars & Meteors) ===
         // ==========================================
         const canvas = document.getElementById('vfx-canvas');
         const ctx = canvas.getContext('2d');
@@ -317,6 +312,33 @@
                     this.size = Math.random() * 6 + 2; this.life = 1;
                     this.decay = Math.random() * 0.02 + 0.01;
                     this.active = true; this.hue = Math.random()*60 + 240;
+                } 
+                // === 新增：繁星 ===
+                else if (this.type === 'star') {
+                    this.x = Math.random() * w; this.y = Math.random() * h;
+                    this.size = Math.random() * 1.5 + 0.5;
+                    // 星星極緩慢漂移
+                    this.vx = (Math.random()-0.5) * 0.05; 
+                    this.vy = (Math.random()-0.5) * 0.05;
+                    // 閃爍效果
+                    this.twinkleSpeed = Math.random() * 0.05 + 0.01;
+                    this.alpha = Math.random();
+                }
+                // === 新增：流星 ===
+                else if (this.type === 'meteor') {
+                    // 從上方或左側隨機出現
+                    if (Math.random() > 0.5) {
+                        this.x = Math.random() * w; this.y = -50;
+                    } else {
+                        this.x = -50; this.y = Math.random() * h * 0.5;
+                    }
+                    // 往右下角快速移動
+                    this.vx = Math.random() * 10 + 15; 
+                    this.vy = Math.random() * 5 + 5;
+                    this.size = Math.random() * 2 + 1;
+                    this.active = false; // 預設不啟動，由主循環隨機觸發
+                    // 流星尾跡長度
+                    this.trailLength = Math.random() * 20 + 10;
                 }
             }
             update() {
@@ -325,6 +347,7 @@
                     this.alpha = (Math.sin(this.life*3)+1)/2*0.3;
                     if(this.x<0||this.x>w||this.y<0||this.y>h) this.reset();
                 } else if (this.type === 'charge' && this.active) {
+                    // ... (省略原有代碼，保持不變) ...
                     const dx = cx - this.x; const dy = cy - this.y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < 40) { this.active = false; } 
@@ -334,32 +357,91 @@
                         this.speed += 0.2; this.alpha = 1 - (dist/350);
                     }
                 } else if (this.type === 'burst' && this.active) {
+                    // ... (省略原有代碼，保持不變) ...
                     this.x += this.vx; this.y += this.vy; this.vx*=0.94; this.vy*=0.94;
                     this.life -= this.decay; this.alpha = this.life;
                     if (this.life<=0) this.active = false;
+                } 
+                // === 更新：繁星 ===
+                else if (this.type === 'star') {
+                    this.x += this.vx; this.y += this.vy;
+                    this.alpha += this.twinkleSpeed;
+                    // 簡單的閃爍循環
+                    if (this.alpha > 1 || this.alpha < 0.2) this.twinkleSpeed = -this.twinkleSpeed;
+                    // 邊界檢查
+                    if(this.x<0) this.x=w; if(this.x>w) this.x=0;
+                    if(this.y<0) this.y=h; if(this.y>h) this.y=0;
+                }
+                // === 更新：流星 ===
+                else if (this.type === 'meteor' && this.active) {
+                    this.x += this.vx; this.y += this.vy;
+                    // 飛出邊界後重置並關閉
+                    if (this.x > w + 100 || this.y > h + 100) {
+                        this.reset();
+                        this.active = false;
+                    }
                 }
             }
             draw() {
-                if (this.type!=='ambient' && !this.active) return;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-                ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.alpha})`;
-                ctx.fill();
+                if ((this.type==='charge'||this.type==='burst'||this.type==='meteor') && !this.active) return;
+                
+                ctx.beginPath();
+
+                // === 繪製：流星 (帶尾跡) ===
+                if (this.type === 'meteor') {
+                    // 使用漸層繪製尾跡
+                    const gradient = ctx.createLinearGradient(this.x, this.y, this.x - this.vx*this.trailLength/this.speed, this.y - this.vy*this.trailLength/this.speed);
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                    gradient.addColorStop(1, 'rgba(161, 140, 209, 0)');
+                    
+                    ctx.lineWidth = this.size;
+                    ctx.strokeStyle = gradient;
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x - this.vx*this.trailLength/this.speed, this.y - this.vy*this.trailLength/this.speed);
+                    ctx.stroke();
+                } 
+                // === 繪製：繁星 (白色/淡藍色) ===
+                else if (this.type === 'star') {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(220, 230, 255, ${this.alpha * 0.8})`;
+                    ctx.fill();
+                }
+                // === 繪製：原有粒子 (保持不變) ===
+                else {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                    ctx.fillStyle = `hsla(${this.hue}, 70%, 70%, ${this.alpha})`;
+                    ctx.fill();
+                }
             }
         }
 
+        // 初始化粒子陣列，加入星星和流星
         const particles = [
             ...Array.from({length: 60}, ()=>new Particle('ambient')),
             ...Array.from({length: 100}, ()=>new Particle('charge')),
-            ...Array.from({length: 150}, ()=>new Particle('burst'))
+            ...Array.from({length: 150}, ()=>new Particle('burst')),
+            ...Array.from({length: 200}, ()=>new Particle('star')), // 新增 200 顆星星
+            ...Array.from({length: 5}, ()=>new Particle('meteor')) // 新增 5 顆流星池
         ];
 
         function animateVFX() {
-            ctx.clearRect(0,0,w,h); ctx.globalCompositeOperation = 'screen';
+            ctx.clearRect(0,0,w,h); 
+            
+            // 隨機觸發流星 (約每 3-5 秒一顆)
+            if (Math.random() > 0.995) {
+                const meteor = particles.find(p => p.type === 'meteor' && !p.active);
+                if (meteor) meteor.active = true;
+            }
+
+            ctx.globalCompositeOperation = 'screen';
             particles.forEach(p => { 
-                if(vfxState==='idle' && p.type!=='ambient') return;
+                // 狀態過濾 (保持不變)
+                if(vfxState==='idle' && (p.type==='charge'||p.type==='burst')) return;
                 if(vfxState==='charging' && p.type==='burst') return;
                 if(vfxState==='burst' && p.type==='charge') return;
+                // 蓄力粒子重置 (保持不變)
                 if(vfxState==='charging' && p.type==='charge' && !p.active && Math.random()>0.7) p.reset();
+                
                 p.update(); p.draw(); 
             });
             ctx.globalCompositeOperation = 'source-over';
@@ -368,7 +450,7 @@
         animateVFX();
 
         // ==========================================
-        // === Enhanced Audio Engine (Rich Variety) ===
+        // === Audio Engine (保持不變) ===
         // ==========================================
         const Audio = {
             ctx: null, masterGain: null, isMuted: false, chargeOsc: null,
@@ -413,51 +495,30 @@
                     this.chargeOsc.stop(this.ctx.currentTime+0.1); this.chargeOsc = null;
                 }
             },
-            // === 全新升級的揭曉音效邏輯 ===
             playReveal() {
                 if(this.isMuted) return;
-                
-                // 定義 5 種不同的聲音場景 (Palettes)
                 const palettes = [
-                    { name: 'Crystal', type: 'sine', notes: [523, 659, 784, 1046], speed: 0.05 }, // C Major (清脆)
-                    { name: 'Dream', type: 'triangle', notes: [220, 261, 329, 440, 523], speed: 0.1 }, // A Minor Pentatonic (夢幻)
-                    { name: 'Void', type: 'sine', notes: [196, 233, 293, 392], speed: 0.15, detune: true }, // G Minor (深沉)
-                    { name: 'Divine', type: 'triangle', notes: [261, 329, 392, 523, 659, 784], speed: 0.04 }, // C Major ext (莊嚴)
-                    { name: 'Mystery', type: 'sine', notes: [293, 349, 415, 587], speed: 0.12 } // D Minor (神祕)
+                    { name: 'Crystal', type: 'sine', notes: [523, 659, 784, 1046], speed: 0.05 }, 
+                    { name: 'Dream', type: 'triangle', notes: [220, 261, 329, 440, 523], speed: 0.1 }, 
+                    { name: 'Void', type: 'sine', notes: [196, 233, 293, 392], speed: 0.15, detune: true }, 
+                    { name: 'Divine', type: 'triangle', notes: [261, 329, 392, 523, 659, 784], speed: 0.04 }, 
+                    { name: 'Mystery', type: 'sine', notes: [293, 349, 415, 587], speed: 0.12 } 
                 ];
-
-                // 隨機選擇一種場景
                 const currentPalette = palettes[Math.floor(Math.random() * palettes.length)];
-                
-                // 隨機決定方向 (上行、下行、齊奏)
                 const direction = Math.random(); 
                 let playOrder = [...currentPalette.notes];
-                if (direction > 0.66) playOrder.reverse(); // 33% 機率下行
-                else if (direction > 0.33) playOrder = playOrder.sort(() => Math.random() - 0.5); // 33% 機率亂序
-                
-                // 齊奏模式 (同時播放)
+                if (direction > 0.66) playOrder.reverse(); 
+                else if (direction > 0.33) playOrder = playOrder.sort(() => Math.random() - 0.5); 
                 const isChord = Math.random() > 0.8; 
-
                 playOrder.forEach((f, i) => { 
-                    const osc = this.ctx.createOscillator(); 
-                    const gain = this.ctx.createGain();
-                    
-                    osc.type = currentPalette.type;
-                    osc.frequency.value = f;
-                    
-                    // 如果是 Void 模式，加入隨機失諧
+                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = currentPalette.type; osc.frequency.value = f;
                     if(currentPalette.detune) osc.detune.value = (Math.random() - 0.5) * 30;
-
-                    // 計算播放時間
                     const startTime = this.ctx.currentTime + (isChord ? 0 : i * currentPalette.speed);
-                    
-                    // 隨機餘音長度 (2~4秒)
                     const duration = 2.0 + Math.random() * 2.0;
-
                     gain.gain.setValueAtTime(0, startTime);
                     gain.gain.linearRampToValueAtTime(0.1 / (isChord ? playOrder.length : 1), startTime + 0.05);
                     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-                    
                     osc.connect(gain); gain.connect(this.masterGain);
                     osc.start(startTime); osc.stop(startTime + duration + 0.5);
                 });
@@ -465,7 +526,7 @@
         };
 
         // ==========================================
-        // === Logic ===
+        // === Logic (保持不變) ===
         // ==========================================
 
         function enableInteractions() {
